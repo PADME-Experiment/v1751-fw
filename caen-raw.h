@@ -19,7 +19,7 @@ class FileHandler{
     FILE* fRawFileP;
 };
 
-class EventHeader{
+class RawHeader{
   public:
     typedef struct{/*{{{*/
       uint32_t eventSize   :28;
@@ -44,8 +44,8 @@ class EventHeader{
       uint32_t reserved3   : 8;
       uint32_t triggerTimeTag;
     } __attribute__((packed)) header_t;/*}}}*/
-    EventHeader(FileHandler* fh);
-    ~EventHeader();
+    RawHeader(FileHandler* fh);
+    ~RawHeader();
     uint32_t GetEventSize() const ;
     bool PullRawData();
     void Info();
@@ -57,7 +57,7 @@ class EventHeader{
 };
 
 
-class Event{
+class Raw{
   public:
   typedef struct {
     unsigned int sample1 :10;
@@ -65,19 +65,21 @@ class Event{
     unsigned int sample3 :10;
     unsigned int nSamples:2;
   } __attribute__((packed)) raw_word_t;
-    Event(FileHandler* fh);
-    ~Event();
+    Raw(FileHandler* fh);
+    ~Raw();
     bool PullRawData();
     void Info();
   private:
     FileHandler* fRawFile;
-    EventHeader* fEventHeader;
+    RawHeader* fEventHeader;
     raw_word_t*  fEventAllRaw;
     unsigned int fChannelsPerEvent;
     uint32_t     fChannelSize;  // in uint32_t words
     uint32_t     fEventSize;  // in uint32_t words
-
 };
+
+
+
 
 
 #endif

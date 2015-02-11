@@ -40,19 +40,19 @@ void FileHandler::Reset(){
 
 
 
-EventHeader::EventHeader(FileHandler* fh){
+RawHeader::RawHeader(FileHandler* fh){
   fRawFile=fh;
   PullRawData();
 }
 
-EventHeader::~EventHeader(){
+RawHeader::~RawHeader(){
 }
-bool EventHeader::PullRawData(){
+bool RawHeader::PullRawData(){
   fRawFile->GetFileData(fHeader);
   return true;
 }
 
-void EventHeader::Info(){/*{{{*/
+void RawHeader::Info(){/*{{{*/
 
   std::cout<<std::endl
     <<"eventSize      " << std::setfill('0') << std::setw(8)<<std::hex<<fHeader.eventSize       <<std::endl
@@ -68,11 +68,11 @@ void EventHeader::Info(){/*{{{*/
   return;
 }/*}}}*/
 
-uint32_t EventHeader::GetEventSize() const {
+uint32_t RawHeader::GetEventSize() const {
   return fHeader.eventSize-4;
   }
 
-unsigned int EventHeader::GetNChannels(){
+unsigned int RawHeader::GetNChannels(){
   unsigned int ret=0;
   for(int i=0;i<8;i++){
     ret+=fHeader.channelMask>>i&0x1;
@@ -80,7 +80,7 @@ unsigned int EventHeader::GetNChannels(){
   return ret;
 }
 
-uint32_t EventHeader::GetRawChannelSize(){
+uint32_t RawHeader::GetRawChannelSize(){
   uint32_t evtSize=GetEventSize();
   unsigned int nChans=GetNChannels();
   unsigned int ret=evtSize/nChans;
@@ -93,9 +93,9 @@ uint32_t EventHeader::GetRawChannelSize(){
 
 
 
-Event::Event(FileHandler* fh){
+Raw::Raw(FileHandler* fh){
   fRawFile=fh;
-  fEventHeader=new EventHeader(fh);
+  fEventHeader=new RawHeader(fh);
   fEventHeader->Info();
   fEventSize=fEventHeader->GetEventSize();
   fChannelSize=fEventHeader->GetRawChannelSize();
@@ -107,18 +107,18 @@ Event::Event(FileHandler* fh){
 
 }
 
-Event::~Event(){
+Raw::~Raw(){
   delete fEventHeader;
   delete[] fEventAllRaw;
 }
 
-bool Event::PullRawData(){
+bool Raw::PullRawData(){
   fEventHeader->PullRawData();
   fRawFile->GetFileDataArray(fEventAllRaw,fEventSize);
 }
 
 
-void Event::Info(){
+void Raw::Info(){
   fEventHeader->Info();
 
   for(int ch=0;ch<fChannelsPerEvent;++ch){
@@ -160,7 +160,7 @@ int main(){
 
   std::string fn="/home/daq/links/daq-optic-data/rawdata_2015_02_05_10_17_50";
   FileHandler rawFile(fn);
-  Event evt(rawFile.GetInstance());
+  Raw evt(rawFile.GetInstance());
   evt.PullRawData();
   evt.Info();
   evt.PullRawData();
