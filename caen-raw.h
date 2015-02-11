@@ -4,9 +4,11 @@
 #include<string>
 #include<stdint.h>
 #include<stdio.h>
+#include<vector>
+#include<map>
 
 
-class FileHandler{
+class FileHandler{/*{{{*/
   public:
     FileHandler(std::string&);
     ~FileHandler();
@@ -17,9 +19,29 @@ class FileHandler{
     void Reset();
   private:
     FILE* fRawFileP;
+};/*}}}*/
+
+class EventChannel{
+};
+class Event{
+  public:
+    void Reserve(int channelId, uint32_t numSamples);
+    void PushSample(int channelId, int16_t value);
+    std::vector<int16_t>& GetChannel(int i);
+    std::map<int,std::vector<int16_t> >::iterator GetChannelsBegin(){return fChannelsData.begin();}
+    std::map<int,std::vector<int16_t> >::iterator GetChannelsEnd()  {return fChannelsData.end();}
+    std::vector<int>& GetListOfChannels();
+    void SetListOfChannels (std::vector<int>&);
+
+  private:
+    std::map<int /**channelId*/, std::vector<int16_t> > fChannelsData;
+    std::vector<int /** channelId*/> fListOfChannels;
 };
 
-class RawHeader{
+
+
+
+class RawHeader{/*{{{*/
   public:
     typedef struct{/*{{{*/
       uint32_t eventSize   :28;
@@ -47,6 +69,7 @@ class RawHeader{
     RawHeader(FileHandler* fh);
     ~RawHeader();
     uint32_t GetEventSize() const ;
+    unsigned int GetChannelMask(){return fHeader.channelMask;}
     bool PullRawData();
     void Info();
     unsigned int GetNChannels();
@@ -54,10 +77,8 @@ class RawHeader{
   private:
     FileHandler* fRawFile;
     header_t fHeader;
-};
-
-
-class Raw{
+};/*}}}*/
+class Raw{/*{{{*/
   public:
   typedef struct {
     unsigned int sample1 :10;
@@ -65,18 +86,20 @@ class Raw{
     unsigned int sample3 :10;
     unsigned int nSamples:2;
   } __attribute__((packed)) raw_word_t;
-    Raw(FileHandler* fh);
+    Raw(FileHandler* fh,Event& evt);
     ~Raw();
-    bool PullRawData();
     void Info();
+    void GetNextRawToEvent(Event&);
   private:
+    bool PullRawData();
     FileHandler* fRawFile;
-    RawHeader* fEventHeader;
+    RawHeader*   fEventHeader;
     raw_word_t*  fEventAllRaw;
     unsigned int fChannelsPerEvent;
     uint32_t     fChannelSize;  // in uint32_t words
-    uint32_t     fEventSize;  // in uint32_t words
-};
+    uint32_t     fEventSize;  // in uint32_t words w/o header
+    std::vector<int /** seq num for Ids of collecting data channels*/ > fChannelIdMap;
+};/*}}}*/
 
 
 

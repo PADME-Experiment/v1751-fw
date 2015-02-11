@@ -20,13 +20,13 @@ FileHandler::~FileHandler(){
   fclose(fRawFileP);
 }
 template<typename T> bool FileHandler::GetFileData(T& dat){
-  int bytesRead=fread((void*)&dat,sizeof(T),1,fRawFileP);
+  unsigned int bytesRead=fread((void*)&dat,sizeof(T),1,fRawFileP);
   if(bytesRead==sizeof(T)) return true;
   std::cerr<<"EOF"<<std::endl;
   return false;
 }
 template<typename T> bool FileHandler::GetFileDataArray(T* dat,unsigned int n){
-  int bytesRead=fread((void*)dat,sizeof(T),n,fRawFileP);
+  unsigned int bytesRead=fread((void*)dat,sizeof(T),n,fRawFileP);
   std::cout<<"sizof(t) "<<sizeof(T)<< " sizeof(dat)" <<sizeof(dat)<<"  bytes "<<bytesRead<<std::endl;
   if(bytesRead==sizeof(T)*n) return true;
   std::cerr<<"EOF"<<std::endl;
@@ -93,13 +93,21 @@ uint32_t RawHeader::GetRawChannelSize(){
 
 
 
-Raw::Raw(FileHandler* fh){
+Raw::Raw(FileHandler* fh,Event& evt){
   fRawFile=fh;
   fEventHeader=new RawHeader(fh);
   fEventHeader->Info();
   fEventSize=fEventHeader->GetEventSize();
   fChannelSize=fEventHeader->GetRawChannelSize();
   fChannelsPerEvent=fEventHeader->GetNChannels();
+
+  const unsigned int mask=fEventHeader->GetChannelMask();
+  for(int i=0;i<8;++i){
+    if(mask>>i&1){
+      fChannelIdMap.push_back(i);
+      evt.Reserve(i,fChannelSize*3);
+    }
+  }
 
   fEventAllRaw=new raw_word_t[fEventSize];
   fRawFile->Reset();// go to the beginning of the file
@@ -118,31 +126,51 @@ bool Raw::PullRawData(){
 }
 
 
+
+
 void Raw::Info(){
   fEventHeader->Info();
-
-  for(int ch=0;ch<fChannelsPerEvent;++ch){
-    for(int word=0;word<fChannelSize;++word){
-      raw_word_t& rawWord=fEventAllRaw[ch*word];
-      if(rawWord.nSamples==3){
-        std::cout<<" chan "<<ch<<"   word "<<word<<" fields "
-          <<rawWord.sample1<<" "
-          <<rawWord.sample2<<" "
-          <<rawWord.sample3
-          <<std::endl;
-      }else if(rawWord.nSamples==2){
-        std::cout<<" chan "<<ch<<"   word "<<word<<" fields "
-          <<rawWord.sample1<<" "
-          <<rawWord.sample2
-          <<std::endl;
-      }else if(rawWord.nSamples==1){
-        std::cout<<" chan "<<ch<<"   word "<<word<<" fields "
-          <<rawWord.sample1
-          <<std::endl;
-      }else std::cerr<<"dummy word"<<std::endl;
-    }
+  for (int i=0;i<fEventSize;++i){
+    raw_word_t& rawWord=fEventAllRaw[i];
+    int ch=fChannelIdMap[i/fChannelSize];
+    int word=i%fChannelSize;
+    if(rawWord.nSamples==3){
+      std::cout<<" chan "<<ch<<"   word "<<word<<" fields "
+        <<rawWord.sample1<<" "
+        <<rawWord.sample2<<" "
+        <<rawWord.sample3
+        <<std::endl;
+    }else if(rawWord.nSamples==2){
+      std::cout<<" chan "<<ch<<"   word "<<word<<" fields "
+        <<rawWord.sample1<<" "
+        <<rawWord.sample2
+        <<std::endl;
+    }else if(rawWord.nSamples==1){
+      std::cout<<" chan "<<ch<<"   word "<<word<<" fields "
+        <<rawWord.sample1
+        <<std::endl;
+    }else std::cerr<<"dummy word"<<std::endl;
   }
+}
 
+void Raw::GetNextRawToEvent(Event& evt){
+  PullRawData();
+  for (int i=0;i<fEventSize;++i){
+    raw_word_t& rawWord=fEventAllRaw[i];
+    int ch=fChannelIdMap[i/fChannelSize];
+    int word=i%fChannelSize;
+    if(rawWord.nSamples==3){
+      evt.PushSample(ch,rawWord.sample1);
+      evt.PushSample(ch,rawWord.sample2);
+      evt.PushSample(ch,rawWord.sample3);
+    }else if(rawWord.nSamples==2){
+      evt.PushSample(ch,rawWord.sample1);
+      evt.PushSample(ch,rawWord.sample2);
+    }else if(rawWord.nSamples==1){
+      evt.PushSample(ch,rawWord.sample1);
+    }else std::cerr<<"dummy word"<<std::endl;
+  }
+  return;
 }
 
 
@@ -154,17 +182,32 @@ void Raw::Info(){
 
 
 
+void Event::Reserve(int channelId, uint32_t numSamples){
+  fChannelsData[channelId].reserve(numSamples);
+  return;
+}
+void Event::PushSample(int channelId, int16_t value){
+  fChannelsData[channelId].push_back(value);
+  return;
+}
+
+
+
+
+
+
+
 
 
 int main(){
-
   std::string fn="/home/daq/links/daq-optic-data/rawdata_2015_02_05_10_17_50";
   FileHandler rawFile(fn);
-  Raw evt(rawFile.GetInstance());
-  evt.PullRawData();
-  evt.Info();
-  evt.PullRawData();
-  evt.Info();
+  Event evt;
+
+  Raw raw(rawFile.GetInstance(),evt);
+
+  raw.GetNextRawToEvent(evt);
+  raw.Info();
 
   return 0;
 }
