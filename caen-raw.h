@@ -43,14 +43,14 @@ namespace caen{
       std::map<int /**channelId*/, ChannelSamples > fChannelsData;
       std::vector<int /** channelId*/> fListOfChannels;
     public:
-      typedef std::map<int /**channelId*/, ChannelSamples >::iterator iterator;
+      typedef std::map<int /**channelId*/, ChannelSamples >::iterator chan_iterator;
 
       void Reserve(int channelId, uint32_t numSamples);
       void PushSample(int channelId, int16_t value);
       ChannelSamples& GetChannel(int i){return fChannelsData[i];}
 
-        iterator GetChannelsBegin(){return fChannelsData.begin();}
-        iterator GetChannelsEnd()  {return fChannelsData.end();}
+        chan_iterator GetChannelsBegin(){return fChannelsData.begin();}
+        chan_iterator GetChannelsEnd()  {return fChannelsData.end();}
         void SetListOfChannels (std::vector<int>& list){fListOfChannels=list;}
         void SetEventId(uint32_t id){fEventId=id;}
         void SetEventTimeTag(uint32_t timeTag){fEventTimeTag=timeTag;}
