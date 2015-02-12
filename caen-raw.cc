@@ -189,11 +189,11 @@ namespace caen{
 
 
   void Event::Reserve(int channelId, uint32_t numSamples){
-    fChannelsData[channelId].reserve(numSamples);
+    fChannelsData[channelId].Reserve(numSamples);
     return;
   }
   void Event::PushSample(int channelId, int16_t value){
-    fChannelsData[channelId].push_back(value);
+    fChannelsData[channelId].PushSample(value);
     return;
   }
   void Event::ClearAll(){
