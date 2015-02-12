@@ -9,10 +9,9 @@ namespace caen{
   }
 
   void Analyse::Process(Event& evt){
-    for(Event::samples_iterator it=evt.GetChannel(0).begin();it!=evt.GetChannel(0).end();++it){
+    for(ChannelSamples::iterator it=evt.GetChannel(0).GetSamplesBegin();it!=evt.GetChannel(0).GetSamplesEnd();++it){
       hist->Fill(*it);
     }
-
     //evt.Info();
   }
   void Analyse::Finish(){

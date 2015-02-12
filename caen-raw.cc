@@ -197,10 +197,10 @@ namespace caen{
     return;
   }
   void Event::ClearAll(){
-    for(std::map<int,std::vector<int16_t> >::iterator it=GetChannelsBegin();
+    for(iterator it=GetChannelsBegin();
         it!=GetChannelsEnd();
         ++it){
-      it->second.clear();
+      it->second.Clear();
     }
     return;
   }

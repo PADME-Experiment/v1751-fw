@@ -24,13 +24,13 @@ namespace caen{
 
   class ChannelSamples{
     public:
-      typedef std::vector<int16_t>::iterator samples_iterator_t;
+      typedef std::vector<int16_t>::iterator iterator;
       typedef std::vector<int16_t> samples_t;
       void Reserve(uint32_t res){fSamples.reserve(res);}
       void PushSample(int16_t val){fSamples.push_back(val);}
       void Clear(){fSamples.clear();}
-      samples_terator_t GetSamplesBegin(){return fSamples.begin();}
-      samples_terator_t GetSamplesEnd  (){return fSamples.end  ();}
+      iterator GetSamplesBegin(){return fSamples.begin();}
+      iterator GetSamplesEnd  (){return fSamples.end  ();}
       samples_t& GetContainer(){return fSamples;}
     private:
       samples_t fSamples;
@@ -40,18 +40,17 @@ namespace caen{
       uint32_t fEventId;
       uint32_t fEventTimeTag;
 
-      std::map<int /**channelId*/, std::vector<int16_t> > fChannelsData;
+      std::map<int /**channelId*/, ChannelSamples > fChannelsData;
       std::vector<int /** channelId*/> fListOfChannels;
     public:
-      typedef std::map<int /**channelId*/, ChannelSamples >::iterator channels_iterator;
+      typedef std::map<int /**channelId*/, ChannelSamples >::iterator iterator;
 
       void Reserve(int channelId, uint32_t numSamples);
       void PushSample(int channelId, int16_t value);
-      std::vector<int16_t>& GetChannel(int i){return fChannelsData[i];}
-      samples_iterator GetSamplesBegin(){return
+      ChannelSamples& GetChannel(int i){return fChannelsData[i];}
 
-        channels_iterator GetChannelsBegin(){return fChannelsData.begin();}
-        channels_iterator GetChannelsEnd()  {return fChannelsData.end();}
+        iterator GetChannelsBegin(){return fChannelsData.begin();}
+        iterator GetChannelsEnd()  {return fChannelsData.end();}
         void SetListOfChannels (std::vector<int>& list){fListOfChannels=list;}
         void SetEventId(uint32_t id){fEventId=id;}
         void SetEventTimeTag(uint32_t timeTag){fEventTimeTag=timeTag;}
