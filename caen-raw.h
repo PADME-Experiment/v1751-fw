@@ -7,8 +7,14 @@
 #include<vector>
 #include<map>
 
+#include<algorithm>
 
 namespace caen{
+
+extern int gDebug;
+extern std::string gOutputRootFile;
+
+
   class FileHandler{/*{{{*/
     public:
       FileHandler(std::string&);
@@ -27,6 +33,8 @@ namespace caen{
       typedef std::vector<int16_t>::iterator iterator;
       typedef std::vector<int16_t> samples_t;
       void Reserve(uint32_t res){fSamples.reserve(res);}
+      void SetChanId(int ch){fChanId=ch;}
+      int GetChanId(){return fChanId;}
       void PushSample(int16_t val){fSamples.push_back(val);}
       void Clear(){fSamples.clear();}
       iterator GetSamplesBegin(){return fSamples.begin();}
@@ -34,6 +42,7 @@ namespace caen{
       samples_t& GetContainer(){return fSamples;}
     private:
       samples_t fSamples;
+      int fChanId;
   };
   class Event{/*{{{*/
     private:
@@ -42,6 +51,7 @@ namespace caen{
 
       std::map<int /**channelId*/, ChannelSamples > fChannelsData;
       std::vector<int /** channelId*/> fListOfChannels;
+
     public:
       typedef std::map<int /**channelId*/, ChannelSamples >::iterator chan_iterator;
 
@@ -59,6 +69,9 @@ namespace caen{
         uint32_t          GetEventTimeTag   (){return fEventTimeTag;}
         void ClearAll();
         void Info();
+        bool HasChannel(int chan){
+          return (
+          std::count(fListOfChannels.begin(),fListOfChannels.end(),chan)>0);}
 
       };/*}}}*/
       class RawHeader{/*{{{*/
