@@ -1,10 +1,10 @@
-#include"analyse.h"
-#include"caen-raw.h"
+#include"analyse_burst.h"
+#include"caen_raw.h"
 #include<sstream>
 
 
 namespace caen{
-  void Analyse::Init(Event& evt){
+  void AnalyseBurst::Init(Event& evt){
     fRootFileP=new TFile(gOutputRootFile.c_str(),"recreate");
     for(int i=0;i<8;++i)
       if(evt.HasChannel(i)){
@@ -21,7 +21,7 @@ namespace caen{
       }
   }
 
-  void Analyse::Process(Event& evt){
+  void AnalyseBurst::Process(Event& evt){
     for(Event::chan_iterator chan_it=evt.GetChannelsBegin();
         chan_it!=evt.GetChannelsEnd();
         ++chan_it){
@@ -40,7 +40,7 @@ namespace caen{
       integral_peak_region[chanId]->Fill(summ);
     }
   }
-  void Analyse::Finish(){
+  void AnalyseBurst::Finish(){
 
 
     fRootFileP->Write();

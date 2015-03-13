@@ -1,7 +1,7 @@
-#ifndef _caen_analyse_h_
-#define _caen_analyse_h_
+#ifndef _caen_analyse_burst_h_
+#define _caen_analyse_burst_h_
 
-#include"caen-raw.h"
+#include"caen_raw.h"
 
 
 
@@ -31,7 +31,7 @@
 
 
 namespace caen{
-  class Analyse{
+  class AnalyseBurst{
     public:
       void Init(Event& evt);
       void Process(Event& evt);

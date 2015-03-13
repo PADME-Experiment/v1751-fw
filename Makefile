@@ -1,26 +1,24 @@
 CC=g++
-ROOTFLAGS=`root-config --cflags --libs`
+ROOTCFLAGS=$(shell root-config --cflags)
+ROOTCLIBS=$(shell root-config --libs)
 CFLAGS=-O2
-CLIBS=
 #CFLAGS=-g -O0
-
-CPPROOT=$(CC) $(CFLAGS) $(CLIBS) $(ROOTFLAGS)
 
 .PHONY: all clean build
 .IGNORE: clean
 .DEFAULT_GOAL:=all
 
 
-OBJFILES=analyse.o caen-raw.o
+OBJFILES=$(patsubst %.cc,%.o,$(wildcard *.cc))
 EXEC=analyser
 
 all: $(EXEC)
 
 $(EXEC): $(OBJFILES)
-	$(CPPROOT) $(OBJFILES) -o $@
+	$(CC) $(ROOTCLIBS) $(OBJFILES) -o $@
 
 $(OBJFILES):%.o : %.cc  %.h
-	$(CPPROOT) -c $< -o $@
+	$(CC) $(CFLAGS) $(ROOTCFLAGS) -c $< -o $@
 
 clean:
 	rm $(OBJFILES) $(EXEC)
