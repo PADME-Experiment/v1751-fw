@@ -18,8 +18,8 @@
 namespace caen{
   class AnalyseRun{
     public:
-      void Init(Event& evt);
-      void Process(Event& evt);
+      void Init();
+      void Process();
       void Finish();
     private:
   };

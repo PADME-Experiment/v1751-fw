@@ -31,20 +31,35 @@
 
 
 namespace caen{
+  class ChannelHists{
+    public:
+      typedef struct{
+        bool hasChan;
+        TH2F* cumulativeSignalPlot;
+        TH1F* integralOfPeakRegion;
+      }hist_per_chan_t;
+      ChannelHists();
+      ~ChannelHists();
+      void MakeChan(int ch);
+      hist_per_chan_t& GetChan(int ch);
+      bool HasChan(int ch);
+
+    static const int gChanMax=8;
+    private:
+      hist_per_chan_t chanhist[gChanMax];
+  };
+
+
   class AnalyseBurst{
     public:
-      void Init(Event& evt);
+      AnalyseBurst(Event& evt);
+      ~AnalyseBurst();
+      void Init(Event& evt){ }
       void Process(Event& evt);
       void Finish();
+      void WriteToFile(std::string filename);
     private:
-      TFile* fRootFileP;
-      TH1F* hist;
-
-      std::map<int,TH1F*> all;
-      std::map<int,TH2F*> cumsignals;
-      std::map<int,TH1F*> integral_peak_region;
-
-
+      ChannelHists hists;
   };
-};
+}
 #endif

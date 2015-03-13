@@ -9,7 +9,7 @@ namespace caen{
 
   int gDebug;
   std::string gOutputRootFile;
-}
+};
 
 int main(int argc, char* argv[]) {
   int opt;
@@ -54,25 +54,31 @@ int main(int argc, char* argv[]) {
   }
 
 
+  caen::AnalyseRun anarun;
+  anarun.Init();
 
   for(std::vector<std::string>::iterator if_it=inputFiles.begin();if_it!=inputFiles.end();++if_it){
     std::string& filename=*if_it;
 
-
-
-    //std::string fn="/home/daq/links/daq-optic-data/rawdata_2015_02_05_10_17_50";
     caen::FileHandler rawFile(filename);
     caen::Event evt;
+    caen::Raw raw(&rawFile,evt);
 
-    caen::Raw raw(rawFile.GetInstance(),evt);
-
-    caen::AnalyseBurst ana;
-    ana.Init(evt);
+    caen::AnalyseBurst anaburst(evt);
     while( raw.GetNextRawToEvent(evt)){
-      ana.Process(evt);
+      anaburst.Process(evt);
     }
-    ana.Finish();
+    anaburst.Finish();
+
+    //if(gDebug>0){
+      std::string burstrootfn=filename+".root";
+      burstrootfn.erase(0,burstrootfn.find_last_of('/')+1);
+      std::cout<<burstrootfn<<std::endl;
+      anaburst.WriteToFile(burstrootfn);
+    //}
+
   }
+  anarun.Finish();
 
 
 
@@ -80,7 +86,3 @@ int main(int argc, char* argv[]) {
 
   return 0;
 }
-
-
-
-
