@@ -6,6 +6,10 @@
 #include<sstream>
 
 
+#include<TF1.h>
+
+
+
 namespace caen{
 
   ChannelHists::ChannelHists(){
@@ -29,7 +33,7 @@ namespace caen{
       std::string namestr,titlestr;
 
       chanhist[ch].hasChan=true;
-      namestr="cumulativeSignalPlot_ch_"+channame.str();titlestr="cumulative Signal Plot channel"  +channame.str();   chanhist[ch].cumulativeSignalPlot = new TH2F(namestr.c_str(),titlestr.c_str(),1000,0,1000,1700,-200,1500);
+      namestr="cumulativeSignalPlot_ch_"+channame.str();titlestr="cumulative Signal Plot channel"  +channame.str();   chanhist[ch].cumulativeSignalPlot = new TH2F(namestr.c_str(),titlestr.c_str(),3000,0,3000,1700,-200,1500);
       namestr="integralOfPeakRegion_ch_"+channame.str();titlestr="integral Of Peak Region channel "+channame.str();   chanhist[ch].integralOfPeakRegion = new TH1F(namestr.c_str(),titlestr.c_str(),3000,0,20000);
   }
 
@@ -71,8 +75,32 @@ namespace caen{
       hists.GetChan(chanId).integralOfPeakRegion->Fill(summ);
     }
   }
+
+  Double_t fitf(Double_t *x,Double_t*par){
+    return (
+        sin(x[0]*par[0]+par[1])+1
+        )*
+      par[2]*
+      exp(-.5*
+          (x[0]-par[3]/par[4])*
+          (x[0]-par[3]/par[4])
+         );
+  }
+
+
   void AnalyseBurst::Finish(){
     // TODO: fit with (sin+1)*gaus
+    for(int i=0;i<ChannelHists::gChanMax;++i){
+      if(hists.HasChan(i)){
+        TF1* fitfunc=new TF1("fitfunc",fitf,0,10000,5);
+        fitfunc->SetParLimits(0,0,1);
+        fitfunc->SetParLimits(1,-3.14,3.15);
+        fitfunc->SetParameter(2,hists.GetChan(i).integralOfPeakRegion->GetMaximum());
+        fitfunc->SetParameter(3,hists.GetChan(i).integralOfPeakRegion->GetMean());
+        fitfunc->SetParameter(4,hists.GetChan(i).integralOfPeakRegion->GetRMS());
+        hists.GetChan(i).integralOfPeakRegion->Fit("fitfunc");
+      }
+    }
   }
 
   void AnalyseBurst::WriteToFile(std::string filename){
