@@ -7,6 +7,7 @@
 
 
 #include<TF1.h>
+#include<TMath.h>
 
 
 
@@ -76,15 +77,8 @@ namespace caen{
     }
   }
 
-  Double_t fitf(Double_t *x,Double_t*par){
-    return (
-        sin(x[0]*par[0]+par[1])+1
-        )*
-      par[2]*
-      exp(-.5*
-          (x[0]-par[3]/par[4])*
-          (x[0]-par[3]/par[4])
-         );
+  Double_t SinExp(Double_t *x,Double_t*par){
+    return (sin(x[0]*par[0]+par[1])+1)*par[2]*TMath::Exp(-x[0]*par[3]);
   }
 
 
@@ -92,13 +86,13 @@ namespace caen{
     // TODO: fit with (sin+1)*gaus
     for(int i=0;i<ChannelHists::gChanMax;++i){
       if(hists.HasChan(i)){
-        TF1* fitfunc=new TF1("fitfunc",fitf,0,10000,5);
-        fitfunc->SetParLimits(0,0,1);
+        TF1* fitfunc=new TF1("fitfunc",SinExp,200,1400,4);
+        fitfunc->SetParLimits(0,0,.1);
         fitfunc->SetParLimits(1,-3.14,3.15);
-        fitfunc->SetParameter(2,hists.GetChan(i).integralOfPeakRegion->GetMaximum());
+        fitfunc->SetParameter(2,hists.GetChan(i).integralOfPeakRegion->GetMaximum()/2.);
         fitfunc->SetParameter(3,hists.GetChan(i).integralOfPeakRegion->GetMean());
-        fitfunc->SetParameter(4,hists.GetChan(i).integralOfPeakRegion->GetRMS());
-        hists.GetChan(i).integralOfPeakRegion->Fit("fitfunc");
+        //fitfunc->SetParameter(4,hists.GetChan(i).integralOfPeakRegion->GetRMS());
+        hists.GetChan(i).integralOfPeakRegion->Fit("fitfunc","RW");
       }
     }
   }
