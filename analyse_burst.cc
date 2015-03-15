@@ -4,10 +4,15 @@
 #include"caen_raw.h"
 
 #include<sstream>
+#include<vector>
+#include<string>
 
 
 #include<TF1.h>
 #include<TMath.h>
+//#include<Fit/FitResult.h>
+//#include<TFitResultPtr.h>
+#include<TFitResult.h>
 
 
 
@@ -78,29 +83,84 @@ namespace caen{
     }
   }
 
-  Double_t SinExp(Double_t *x,Double_t*par){
-    return (sin(x[0]*par[0]+par[1])+1)*par[2]*TMath::Exp(-x[0]*par[3]);
-  }
-
 
   void AnalyseBurst::Finish(){
-    // TODO: fit with (sin+1)*gaus
     for(int i=0;i<ChannelHists::gChanMax;++i){
       if(hists.HasChan(i)){
-        TF1* fitfunc=new TF1("fitfunc","[0]*exp(-0.5*((x-[1])/[2])**2)*(sin(x*[3]+[4])+1)",200,1400);
-        fitfunc->SetParLimits(3,
-        1.5*3.14/(hists.GetChan(i).integralOfPeakRegion->GetBinCenter(hists.GetChan(i).integralOfPeakRegion->GetNbinsX())),
-        4*3.14/(hists.GetChan(i).integralOfPeakRegion->GetBinCenter(hists.GetChan(i).integralOfPeakRegion->GetMaximumBin()))
-        );
-        fitfunc->SetParameter(3,1.8*3.14/(hists.GetChan(i).integralOfPeakRegion->GetBinCenter(hists.GetChan(i).integralOfPeakRegion->GetMaximumBin())));
-        fitfunc->SetParLimits(4,-3.14,3.15);
-        fitfunc->SetParameter(4,3.15);
-        fitfunc->SetParameter(0,hists.GetChan(i).integralOfPeakRegion->GetMaximum()/2.);
-        //fitfunc->SetParameter(1,hists.GetChan(i).integralOfPeakRegion->GetMean());
-        fitfunc->FixParameter(1,0);
-        fitfunc->SetParLimits(2,hists.GetChan(i).integralOfPeakRegion->GetRMS(),10*hists.GetChan(i).integralOfPeakRegion->GetRMS());
-        fitfunc->SetParameter(2,2*hists.GetChan(i).integralOfPeakRegion->GetRMS());
-        hists.GetChan(i).integralOfPeakRegion->Fit("fitfunc","WW");
+        TF1* fitSinExp=new TF1("sinExp","[0]*exp(-0.5*((x-[1])/[2])*((x-[1])/[2]))*(sin(x*[3]+[4])+1)",200,1400);
+        fitSinExp->SetParLimits(3,
+            3.14/(
+              hists.GetChan(i).integralOfPeakRegion->GetBinCenter(
+                hists.GetChan(i).integralOfPeakRegion->GetNbinsX()
+                )) ,
+            4*3.14/(
+              hists.GetChan(i).integralOfPeakRegion->GetBinCenter(
+                hists.GetChan(i).integralOfPeakRegion->GetMaximumBin()
+                ))
+            );
+        fitSinExp->SetParameter(3,3.14/(hists.GetChan(i).integralOfPeakRegion->GetBinCenter(hists.GetChan(i).integralOfPeakRegion->GetMaximumBin())));
+        fitSinExp->SetParLimits(4,-3.14,3*3.15);
+        fitSinExp->SetParameter(4,0);
+        fitSinExp->SetParameter(0,hists.GetChan(i).integralOfPeakRegion->GetMaximum()/2.);
+        fitSinExp->SetParLimits(0,1,999999999);
+        fitSinExp->FixParameter(1,0);
+        fitSinExp->SetParLimits(2,hists.GetChan(i).integralOfPeakRegion->GetRMS(),10*hists.GetChan(i).integralOfPeakRegion->GetRMS());
+        fitSinExp->SetParameter(2,2*hists.GetChan(i).integralOfPeakRegion->GetRMS());
+
+        //TFitResult*fitres=hists.GetChan(i).integralOfPeakRegion->Fit("sinExp","WWS").Get();
+hists.GetChan(i).integralOfPeakRegion->Rebin(3);
+
+
+
+        Int_t fitresi=Int_t(hists.GetChan(i).integralOfPeakRegion->Fit("sinExp","W"));
+        std::cout<<fitresi<<std::endl;
+        //fitres->Print();
+
+        if(fitresi==0){
+
+        const double fitSinGaus_A =fitSinExp->GetParameter(0);
+        const double fitSinGaus_X0=fitSinExp->GetParameter(1);
+        const double fitSinGaus_w =fitSinExp->GetParameter(2);
+        const double fitSinGaus_a =fitSinExp->GetParameter(3);
+        const double fitSinGaus_b =fitSinExp->GetParameter(4);
+
+
+        std::vector<TF1*> gausFunctions;
+        int gaus_i;
+        Int_t gausresi;
+        do {
+          int gaus_i=gausFunctions.size();
+          std::stringstream funcname;
+          funcname<<"gaus_"<<gaus_i;
+          TF1* fitGaus=new TF1(
+              funcname.str().c_str(),
+              "[0]*exp(-0.5*((x-[1])/[2])**2)",
+              ((2*gaus_i-.5)*3.14-fitSinGaus_b)/fitSinGaus_a,
+              ((2*gaus_i+1.5)*3.14-fitSinGaus_b)/fitSinGaus_a);
+          gausFunctions.push_back(fitGaus);
+
+          fitGaus->SetParameter(1,((2*gaus_i+.5)*3.14-fitSinGaus_b)/fitSinGaus_a);
+          fitGaus->SetParLimits(1,
+              ((2*gaus_i)*3.14-fitSinGaus_b)/fitSinGaus_a,
+              ((2*gaus_i+1)*3.14-fitSinGaus_b)/fitSinGaus_a);
+          fitGaus->SetParameter(2,1./fitSinGaus_a);
+          fitGaus->SetParLimits(2,.05/fitSinGaus_a,10/fitSinGaus_a);
+          fitGaus->SetParameter(0,2*fitSinGaus_A*exp(-.5*(fitSinGaus_X0-fitGaus->GetParameter(1))/fitSinGaus_w*(fitSinGaus_X0-fitGaus->GetParameter(1))/fitSinGaus_w));
+
+          std::cout
+            <<"fitGaus->GetParameter(1) "<<fitGaus->GetParameter(1) <<std::endl
+            <<"fitGaus->GetParameter(2) "<<fitGaus->GetParameter(2) <<std::endl
+            <<"fitGaus->GetParameter(0) "<<fitGaus->GetParameter(0) <<std::endl;
+
+
+
+          //hists.GetChan(i).integralOfPeakRegion->Fit(funcname.str().c_str(),"R+");
+          gausresi=Int_t(hists.GetChan(i).integralOfPeakRegion->Fit(fitGaus,"BR+"));
+          std::cout<<gaus_i<<" "<<gausresi<<std::endl;;
+        } while (gausresi==0);//se shozhda
+        }
+
+
       }
     }
   }
