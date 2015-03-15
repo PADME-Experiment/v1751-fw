@@ -33,14 +33,20 @@ namespace caen{
   }
 
   void ChannelHists::MakeChan(int ch){
-      if(chanhist[ch].hasChan)return;
+    if(chanhist[ch].hasChan)return;
 
-      std::stringstream channame;channame<<ch;
-      std::string namestr,titlestr;
+    std::stringstream channame;channame<<ch;
+    std::string namestr,titlestr;
 
-      chanhist[ch].hasChan=true;
-      namestr="cumulativeSignalPlot_ch_"+channame.str();titlestr="cumulative Signal Plot channel"  +channame.str();   chanhist[ch].cumulativeSignalPlot = new TH2F(namestr.c_str(),titlestr.c_str(),3000,0,3000,1700,-200,1500);
-      namestr="integralOfPeakRegion_ch_"+channame.str();titlestr="integral Of Peak Region channel "+channame.str();   chanhist[ch].integralOfPeakRegion = new TH1F(namestr.c_str(),titlestr.c_str(),3000,0,20000);
+    chanhist[ch].hasChan=true;
+
+    namestr="cumulativeSignalPlot_ch_"+channame.str();
+    titlestr="cumulative Signal Plot channel"  +channame.str();
+    chanhist[ch].cumulativeSignalPlot = new TH2F(namestr.c_str(),titlestr.c_str(),3000,0,3000,1700,-200,1500);
+
+    namestr="integralOfPeakRegion_ch_"+channame.str();
+    titlestr="integral Of Peak Region channel "+channame.str();
+    chanhist[ch].integralOfPeakRegion = new TH1F(namestr.c_str(),titlestr.c_str(),3000,0,20000);
   }
 
   bool ChannelHists::HasChan(int ch){
@@ -73,7 +79,6 @@ namespace caen{
       for(ChannelSamples::iterator samp_it=chan.GetSamplesBegin();
           samp_it!=chan.GetSamplesEnd();
           ++samp_it,++i){
-        //all[chanId]->Fill(*samp_it);
         hists.GetChan(chanId).cumulativeSignalPlot->Fill(i,*samp_it);
         summ+=i>750&&i<850?*samp_it:0;
         //summ+=i>560&&i<620?*samp_it:0;
@@ -106,17 +111,10 @@ namespace caen{
         fitSinExp->FixParameter(1,0);
         fitSinExp->SetParLimits(2,hists.GetChan(i).integralOfPeakRegion->GetRMS(),10*hists.GetChan(i).integralOfPeakRegion->GetRMS());
         fitSinExp->SetParameter(2,2*hists.GetChan(i).integralOfPeakRegion->GetRMS());
-
-        //TFitResult*fitres=hists.GetChan(i).integralOfPeakRegion->Fit("sinExp","WWS").Get();
-hists.GetChan(i).integralOfPeakRegion->Rebin(3);
-
-
-
+        hists.GetChan(i).integralOfPeakRegion->Rebin(3);
         Int_t fitresi=Int_t(hists.GetChan(i).integralOfPeakRegion->Fit("sinExp","W"));
-        std::cout<<fitresi<<std::endl;
-        //fitres->Print();
 
-        if(fitresi==0){
+        if(fitresi)continue;
 
         const double fitSinGaus_A =fitSinExp->GetParameter(0);
         const double fitSinGaus_X0=fitSinExp->GetParameter(1);
@@ -152,29 +150,22 @@ hists.GetChan(i).integralOfPeakRegion->Rebin(3);
             <<"fitGaus->GetParameter(2) "<<fitGaus->GetParameter(2) <<std::endl
             <<"fitGaus->GetParameter(0) "<<fitGaus->GetParameter(0) <<std::endl;
 
-
-
           //hists.GetChan(i).integralOfPeakRegion->Fit(funcname.str().c_str(),"R+");
           gausresi=Int_t(hists.GetChan(i).integralOfPeakRegion->Fit(fitGaus,"BR+"));
           std::cout<<gaus_i<<" "<<gausresi<<std::endl;;
-        } while (gausresi==0);//se shozhda
-        }
-
-
+        } while (gausresi==0);
       }
     }
   }
 
   void AnalyseBurst::WriteToFile(std::string filename){
     TFile* fRootFileP=new TFile(filename.c_str(),"recreate");
-
     for(int i=0;i<ChannelHists::gChanMax;++i){
       if(hists.HasChan(i)){
         fRootFileP->CurrentDirectory()->WriteTObject(hists.GetChan(i).cumulativeSignalPlot);
         fRootFileP->CurrentDirectory()->WriteTObject(hists.GetChan(i).integralOfPeakRegion);
       }
     }
-
     fRootFileP->Write();
     fRootFileP->Close();
     delete fRootFileP;
