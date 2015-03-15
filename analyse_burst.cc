@@ -98,7 +98,7 @@ namespace caen{
                 hists.GetChan(i).integralOfPeakRegion->GetMaximumBin()
                 ))
             );
-        fitSinExp->SetParameter(3,3.14/(hists.GetChan(i).integralOfPeakRegion->GetBinCenter(hists.GetChan(i).integralOfPeakRegion->GetMaximumBin())));
+        fitSinExp->SetParameter(3,.5*3.14/(hists.GetChan(i).integralOfPeakRegion->GetBinCenter(hists.GetChan(i).integralOfPeakRegion->GetMaximumBin())));
         fitSinExp->SetParLimits(4,-3.14,3*3.15);
         fitSinExp->SetParameter(4,0);
         fitSinExp->SetParameter(0,hists.GetChan(i).integralOfPeakRegion->GetMaximum()/2.);
