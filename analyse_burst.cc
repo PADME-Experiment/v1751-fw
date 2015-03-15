@@ -70,7 +70,8 @@ namespace caen{
           ++samp_it,++i){
         //all[chanId]->Fill(*samp_it);
         hists.GetChan(chanId).cumulativeSignalPlot->Fill(i,*samp_it);
-        summ+=i>500&&i<750?*samp_it:0;
+        summ+=i>750&&i<850?*samp_it:0;
+        //summ+=i>560&&i<620?*samp_it:0;
       }
 
       hists.GetChan(chanId).integralOfPeakRegion->Fill(summ);
@@ -86,13 +87,20 @@ namespace caen{
     // TODO: fit with (sin+1)*gaus
     for(int i=0;i<ChannelHists::gChanMax;++i){
       if(hists.HasChan(i)){
-        TF1* fitfunc=new TF1("fitfunc",SinExp,200,1400,4);
-        fitfunc->SetParLimits(0,0,.1);
-        fitfunc->SetParLimits(1,-3.14,3.15);
-        fitfunc->SetParameter(2,hists.GetChan(i).integralOfPeakRegion->GetMaximum()/2.);
-        fitfunc->SetParameter(3,hists.GetChan(i).integralOfPeakRegion->GetMean());
-        //fitfunc->SetParameter(4,hists.GetChan(i).integralOfPeakRegion->GetRMS());
-        hists.GetChan(i).integralOfPeakRegion->Fit("fitfunc","RW");
+        TF1* fitfunc=new TF1("fitfunc","[0]*exp(-0.5*((x-[1])/[2])**2)*(sin(x*[3]+[4])+1)",200,1400);
+        fitfunc->SetParLimits(3,
+        1.5*3.14/(hists.GetChan(i).integralOfPeakRegion->GetBinCenter(hists.GetChan(i).integralOfPeakRegion->GetNbinsX())),
+        4*3.14/(hists.GetChan(i).integralOfPeakRegion->GetBinCenter(hists.GetChan(i).integralOfPeakRegion->GetMaximumBin()))
+        );
+        fitfunc->SetParameter(3,1.8*3.14/(hists.GetChan(i).integralOfPeakRegion->GetBinCenter(hists.GetChan(i).integralOfPeakRegion->GetMaximumBin())));
+        fitfunc->SetParLimits(4,-3.14,3.15);
+        fitfunc->SetParameter(4,3.15);
+        fitfunc->SetParameter(0,hists.GetChan(i).integralOfPeakRegion->GetMaximum()/2.);
+        //fitfunc->SetParameter(1,hists.GetChan(i).integralOfPeakRegion->GetMean());
+        fitfunc->FixParameter(1,0);
+        fitfunc->SetParLimits(2,hists.GetChan(i).integralOfPeakRegion->GetRMS(),10*hists.GetChan(i).integralOfPeakRegion->GetRMS());
+        fitfunc->SetParameter(2,2*hists.GetChan(i).integralOfPeakRegion->GetRMS());
+        hists.GetChan(i).integralOfPeakRegion->Fit("fitfunc","WW");
       }
     }
   }
