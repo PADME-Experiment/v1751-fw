@@ -37,6 +37,7 @@ namespace caen{
         bool hasChan;
         TH2F* cumulativeSignalPlot;
         TH1F* integralOfPeakRegion;
+        TH1F* photoElectrons;
       }hist_per_chan_t;
       ChannelHists();
       ~ChannelHists();

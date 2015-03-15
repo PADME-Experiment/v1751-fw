@@ -47,6 +47,10 @@ namespace caen{
     namestr="integralOfPeakRegion_ch_"+channame.str();
     titlestr="integral Of Peak Region channel "+channame.str();
     chanhist[ch].integralOfPeakRegion = new TH1F(namestr.c_str(),titlestr.c_str(),3000,0,20000);
+
+
+
+    chanhist[ch].photoElectrons=0;
   }
 
   bool ChannelHists::HasChan(int ch){
@@ -90,29 +94,29 @@ namespace caen{
 
 
   void AnalyseBurst::Finish(){
-    for(int i=0;i<ChannelHists::gChanMax;++i){
-      if(hists.HasChan(i)){
+    for(int channel_i=0;channel_i<ChannelHists::gChanMax;++channel_i){
+      if(hists.HasChan(channel_i)){
         TF1* fitSinExp=new TF1("sinExp","[0]*exp(-0.5*((x-[1])/[2])*((x-[1])/[2]))*(sin(x*[3]+[4])+1)",200,1400);
         fitSinExp->SetParLimits(3,
             3.14/(
-              hists.GetChan(i).integralOfPeakRegion->GetBinCenter(
-                hists.GetChan(i).integralOfPeakRegion->GetNbinsX()
+              hists.GetChan(channel_i).integralOfPeakRegion->GetBinCenter(
+                hists.GetChan(channel_i).integralOfPeakRegion->GetNbinsX()
                 )) ,
             4*3.14/(
-              hists.GetChan(i).integralOfPeakRegion->GetBinCenter(
-                hists.GetChan(i).integralOfPeakRegion->GetMaximumBin()
+              hists.GetChan(channel_i).integralOfPeakRegion->GetBinCenter(
+                hists.GetChan(channel_i).integralOfPeakRegion->GetMaximumBin()
                 ))
             );
-        fitSinExp->SetParameter(3,.5*3.14/(hists.GetChan(i).integralOfPeakRegion->GetBinCenter(hists.GetChan(i).integralOfPeakRegion->GetMaximumBin())));
+        fitSinExp->SetParameter(3,.5*3.14/(hists.GetChan(channel_i).integralOfPeakRegion->GetBinCenter(hists.GetChan(channel_i).integralOfPeakRegion->GetMaximumBin())));
         fitSinExp->SetParLimits(4,-3.14,3*3.15);
         fitSinExp->SetParameter(4,0);
-        fitSinExp->SetParameter(0,hists.GetChan(i).integralOfPeakRegion->GetMaximum()/2.);
+        fitSinExp->SetParameter(0,hists.GetChan(channel_i).integralOfPeakRegion->GetMaximum()/2.);
         fitSinExp->SetParLimits(0,1,999999999);
         fitSinExp->FixParameter(1,0);
-        fitSinExp->SetParLimits(2,hists.GetChan(i).integralOfPeakRegion->GetRMS(),10*hists.GetChan(i).integralOfPeakRegion->GetRMS());
-        fitSinExp->SetParameter(2,2*hists.GetChan(i).integralOfPeakRegion->GetRMS());
-        hists.GetChan(i).integralOfPeakRegion->Rebin(3);
-        Int_t fitresi=Int_t(hists.GetChan(i).integralOfPeakRegion->Fit("sinExp","W"));
+        fitSinExp->SetParLimits(2,hists.GetChan(channel_i).integralOfPeakRegion->GetRMS(),10*hists.GetChan(channel_i).integralOfPeakRegion->GetRMS());
+        fitSinExp->SetParameter(2,2*hists.GetChan(channel_i).integralOfPeakRegion->GetRMS());
+        hists.GetChan(channel_i).integralOfPeakRegion->Rebin(3);
+        Int_t fitresi=Int_t(hists.GetChan(channel_i).integralOfPeakRegion->Fit("sinExp","W"));
 
         if(fitresi)continue;
 
@@ -150,10 +154,29 @@ namespace caen{
             <<"fitGaus->GetParameter(2) "<<fitGaus->GetParameter(2) <<std::endl
             <<"fitGaus->GetParameter(0) "<<fitGaus->GetParameter(0) <<std::endl;
 
-          //hists.GetChan(i).integralOfPeakRegion->Fit(funcname.str().c_str(),"R+");
-          gausresi=Int_t(hists.GetChan(i).integralOfPeakRegion->Fit(fitGaus,"BR+"));
+          //hists.GetChan(channel_i).integralOfPeakRegion->Fit(funcname.str().c_str(),"R+");
+          gausresi=Int_t(hists.GetChan(channel_i).integralOfPeakRegion->Fit(fitGaus,"BR+"));
           std::cout<<gaus_i<<" "<<gausresi<<std::endl;;
         } while (gausresi==0);
+
+
+        std::stringstream channelssname;
+        channelssname<<channel_i;
+        std::string photoElectronsName="photoElectrons_ch_"+channelssname.str();
+        std::string photoElectronsTitle="photo Electrons channel "+channelssname.str();
+        hists.GetChan(channel_i).photoElectrons=new TH1F(photoElectronsName.c_str(), photoElectronsTitle.c_str(), gaus_i*2, 0, gaus_i);
+
+
+        // HERE TODO:
+        // fill the histogram with integral of
+        // integralOfPeakRegin in funcSinGaus regions
+        //
+        // and
+        //
+        // gaus mean vs n ph electrons
+
+
+
       }
     }
   }
