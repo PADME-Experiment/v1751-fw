@@ -29,6 +29,8 @@ namespace caen{
       typedef struct{
         TH2F* photoElectronPeaksMerged2;
         TH2F* gausMean_photoElectrons;
+        TH2F* gausAmplitude_photoElectrons;
+        TH2F* gausSigma_photoElectrons;
       }hist_per_chan_t;
       static const int gChanMax=8;
     private:

@@ -1,8 +1,8 @@
 CC=g++
 ROOTCFLAGS=$(shell root-config --cflags)
 ROOTCLIBS=$(shell root-config --libs)
-CFLAGS=-O2 -Wall
-#CFLAGS=-g -O0
+#CFLAGS=-O2 -Wall
+CFLAGS=-g -O0
 
 .PHONY: all clean build
 .IGNORE: clean

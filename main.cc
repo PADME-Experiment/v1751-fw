@@ -59,6 +59,7 @@ int main(int argc, char* argv[]) {
 
   for(std::vector<std::string>::iterator if_it=inputFiles.begin();if_it!=inputFiles.end();++if_it){
     std::string& filename=*if_it;
+    std::cerr<<"Processing "<<filename<<std::endl;
 
     caen::FileHandler rawFile(filename);
     caen::Event evt;

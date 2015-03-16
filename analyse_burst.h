@@ -40,6 +40,8 @@ namespace caen{
         TH1F* photoElectronPeaksMerged;
         TH2F* photoElectronPeaksMerged2;
         TH2F* gausMean_photoElectrons;
+        TH2F* gausAmplitude_photoElectrons;
+        TH2F* gausSigma_photoElectrons;
         TGraphErrors* photPeakMer;
         TGraphErrors* gausMeanPhotElec;
       }hist_per_chan_t;

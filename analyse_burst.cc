@@ -32,6 +32,8 @@ namespace caen{
         delete chanhist[i].photoElectronPeaksMerged;
         delete chanhist[i].photoElectronPeaksMerged2;
         delete chanhist[i].gausMean_photoElectrons;
+        delete chanhist[i].gausAmplitude_photoElectrons;
+        delete chanhist[i].gausSigma_photoElectrons;
         delete chanhist[i].photPeakMer;
         delete chanhist[i].gausMeanPhotElec;
       }
@@ -58,6 +60,9 @@ namespace caen{
     chanhist[ch].photoElectronPeaksMerged=0;
     chanhist[ch].photoElectronPeaksMerged2=0;
     chanhist[ch].gausMean_photoElectrons=0;
+    chanhist[ch].gausAmplitude_photoElectrons=0;
+    chanhist[ch].gausSigma_photoElectrons=0;
+
     chanhist[ch].photPeakMer=0;
     chanhist[ch].gausMeanPhotElec=0;
   }/*}}}*/
@@ -89,6 +94,7 @@ namespace caen{
           samp_it!=chan.GetSamplesEnd();
           ++samp_it,++i){
         hists.GetChan(chanId).cumulativeSignalPlot->Fill(i,*samp_it);
+        //summ+=i>1740&&i<1880?*samp_it:0;
         summ+=i>750&&i<850?*samp_it:0;
         //summ+=i>560&&i<620?*samp_it:0;
       }
@@ -171,12 +177,22 @@ namespace caen{
         std::string photoElectronsTitle="photo Electron Peaks Merged channel "+channelssname.str();
         hists.GetChan(channel_i).photoElectronPeaksMerged=new TH1F(photoElectronsName.c_str(), photoElectronsTitle.c_str(), gaus_i*2, 0, gaus_i);
         //hists.GetChan(channel_i).photoElectronPeaksMerged2=new TH2F(photoElectronsName.c_str(), photoElectronsTitle.c_str(), gaus_i*2, 0, gaus_i,200,0,1000);
-        hists.GetChan(channel_i).photoElectronPeaksMerged2=new TH2F(photoElectronsName.c_str(), photoElectronsTitle.c_str(), 40, 0, 20,300,0,5000);
+        hists.GetChan(channel_i).photoElectronPeaksMerged2=new TH2F(photoElectronsName.c_str(), photoElectronsTitle.c_str(), 40, 0, 20,5000,0,5000);
         std::cout<<"gaus_i "<<gaus_i<<std::endl;
 
         std::string gausMean_photoElectronsName="gausMean_photoElectrons_ch_"+channelssname.str();
         std::string gausMean_photoElectronsTitle="gaus mean photo Electrons channel "+channelssname.str();
-        hists.GetChan(channel_i).gausMean_photoElectrons=new TH2F(gausMean_photoElectronsName.c_str(), gausMean_photoElectronsTitle.c_str(), 40, 0, 20,300,0,5000);
+        hists.GetChan(channel_i).gausMean_photoElectrons=new TH2F(gausMean_photoElectronsName.c_str(), gausMean_photoElectronsTitle.c_str(), 40, 0, 20,500,0,5000);
+
+
+
+      std::string gausAmpl_photoElectronsName="gausAmplitude_photoElectrons_ch_"+channelssname.str();
+      std::string gausAmpl_photoElectronsTitle="gaus Amplitude photo Electrons channel "+channelssname.str();
+      hists.GetChan(channel_i).gausAmplitude_photoElectrons=new TH2F(gausAmpl_photoElectronsName.c_str(), gausAmpl_photoElectronsTitle.c_str(), 40, 0, 20,5000,0,5000);
+
+      std::string gausSig_photoElectronsName="gausSigma_photoElectrons_ch_"+channelssname.str();
+      std::string gausSig_photoElectronsTitle="gaus Sigma photo Electrons channel "+channelssname.str();
+      hists.GetChan(channel_i).gausSigma_photoElectrons=new TH2F(gausSig_photoElectronsName.c_str(), gausSig_photoElectronsTitle.c_str(), 40, 0, 20,500,0,500);
 
 
         //Double_t x[peak_i];
@@ -203,6 +219,14 @@ namespace caen{
           peak_i,
           gausFunctions[peak_i-1]->GetParameter(1)
           );
+          hists.GetChan(channel_i).gausAmplitude_photoElectrons->Fill(
+          peak_i,
+          gausFunctions[peak_i-1]->GetParameter(0)
+          );
+          hists.GetChan(channel_i).gausSigma_photoElectrons->Fill(
+          peak_i,
+          gausFunctions[peak_i-1]->GetParameter(2)
+          );
           delete gausFunctions[peak_i-1];
 
         }
@@ -218,6 +242,9 @@ namespace caen{
         if(hists.GetChan(i).photoElectronPeaksMerged)fRootFileP->CurrentDirectory()->WriteTObject(hists.GetChan(i).photoElectronPeaksMerged);
         if(hists.GetChan(i).photoElectronPeaksMerged2)fRootFileP->CurrentDirectory()->WriteTObject(hists.GetChan(i).photoElectronPeaksMerged2);
         if(hists.GetChan(i).gausMean_photoElectrons )fRootFileP->CurrentDirectory()->WriteTObject(hists.GetChan(i).gausMean_photoElectrons);
+        if(hists.GetChan(i).gausAmplitude_photoElectrons )fRootFileP->CurrentDirectory()->WriteTObject(hists.GetChan(i).gausAmplitude_photoElectrons);
+        if(hists.GetChan(i).gausSigma_photoElectrons )fRootFileP->CurrentDirectory()->WriteTObject(hists.GetChan(i).gausSigma_photoElectrons);
+
         if(hists.GetChan(i).photPeakMer             )fRootFileP->CurrentDirectory()->WriteTObject(hists.GetChan(i).photPeakMer     );
         if(hists.GetChan(i).gausMeanPhotElec        )fRootFileP->CurrentDirectory()->WriteTObject(hists.GetChan(i).gausMeanPhotElec);
       }
