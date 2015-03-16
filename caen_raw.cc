@@ -136,7 +136,7 @@ namespace caen{
 
   void Raw::Info(){
     fEventHeader->Info();
-    for (int i=0;i<fEventSize;++i){
+    for (unsigned int i=0;i<fEventSize;++i){
       raw_word_t& rawWord=fEventAllRaw[i];
       int ch=fChannelIdMap[i/fChannelSize];
       int word=i%fChannelSize;
@@ -164,10 +164,10 @@ namespace caen{
     evt.ClearAll();
     evt.SetEventId(fEventHeader->GetEventId());
     evt.SetEventTimeTag(fEventHeader->GetEventTimeTag());
-    for (int i=0;i<fEventSize;++i){
+    for (unsigned int i=0;i<fEventSize;++i){
       raw_word_t& rawWord=fEventAllRaw[i];
       int ch=fChannelIdMap[i/fChannelSize];
-      int word=i%fChannelSize;
+      //int word=i%fChannelSize;
       if(rawWord.nSamples==3){
         evt.PushSample(ch,rawWord.sample1);
         evt.PushSample(ch,rawWord.sample2);

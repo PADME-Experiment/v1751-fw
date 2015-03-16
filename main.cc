@@ -69,6 +69,7 @@ int main(int argc, char* argv[]) {
       anaburst.Process(evt);
     }
     anaburst.Finish();
+    anarun.Process(anaburst.GetHists());
 
     //if(gDebug>0){
       std::string burstrootfn=filename+".root";
@@ -79,6 +80,7 @@ int main(int argc, char* argv[]) {
 
   }
   anarun.Finish();
+  anarun.WriteToFile(caen::gOutputRootFile);
 
 
 

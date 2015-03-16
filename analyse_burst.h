@@ -13,7 +13,7 @@
 #include<TH2F.h>
 #include<TFile.h>
 #include<TDirectory.h>
-
+#include<TGraphErrors.h>
 
 
 
@@ -37,7 +37,11 @@ namespace caen{
         bool hasChan;
         TH2F* cumulativeSignalPlot;
         TH1F* integralOfPeakRegion;
-        TH1F* photoElectrons;
+        TH1F* photoElectronPeaksMerged;
+        TH2F* photoElectronPeaksMerged2;
+        TH2F* gausMean_photoElectrons;
+        TGraphErrors* photPeakMer;
+        TGraphErrors* gausMeanPhotElec;
       }hist_per_chan_t;
       ChannelHists();
       ~ChannelHists();
@@ -54,11 +58,12 @@ namespace caen{
   class AnalyseBurst{
     public:
       AnalyseBurst(Event& evt);
-      ~AnalyseBurst();
+      ~AnalyseBurst(){ }
       void Init(Event& evt){ }
       void Process(Event& evt);
       void Finish();
       void WriteToFile(std::string filename);
+      ChannelHists& GetHists(){return hists;}
     private:
       ChannelHists hists;
   };

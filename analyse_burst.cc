@@ -13,26 +13,31 @@
 //#include<Fit/FitResult.h>
 //#include<TFitResultPtr.h>
 #include<TFitResult.h>
+#include<TGraphErrors.h>
 
 
 
 namespace caen{
 
-  ChannelHists::ChannelHists(){
+  ChannelHists::ChannelHists(){/*{{{*/
     for(int i=0;i<gChanMax;++i){
       chanhist[i].hasChan=false;
     }
-  }
-
-  ChannelHists::~ChannelHists(){
+  }/*}}}*/
+  ChannelHists::~ChannelHists(){/*{{{*/
     for(int i=0;i<gChanMax;++i){
       if(chanhist[i].hasChan){
-        //delete histos
+        delete chanhist[i].cumulativeSignalPlot;
+        delete chanhist[i].integralOfPeakRegion;
+        delete chanhist[i].photoElectronPeaksMerged;
+        delete chanhist[i].photoElectronPeaksMerged2;
+        delete chanhist[i].gausMean_photoElectrons;
+        delete chanhist[i].photPeakMer;
+        delete chanhist[i].gausMeanPhotElec;
       }
     }
-  }
-
-  void ChannelHists::MakeChan(int ch){
+  }/*}}}*/
+  void ChannelHists::MakeChan(int ch){/*{{{*/
     if(chanhist[ch].hasChan)return;
 
     std::stringstream channame;channame<<ch;
@@ -50,29 +55,29 @@ namespace caen{
 
 
 
-    chanhist[ch].photoElectrons=0;
-  }
-
-  bool ChannelHists::HasChan(int ch){
+    chanhist[ch].photoElectronPeaksMerged=0;
+    chanhist[ch].photoElectronPeaksMerged2=0;
+    chanhist[ch].gausMean_photoElectrons=0;
+    chanhist[ch].photPeakMer=0;
+    chanhist[ch].gausMeanPhotElec=0;
+  }/*}}}*/
+  bool ChannelHists::HasChan(int ch){/*{{{*/
     return chanhist[ch].hasChan;
-  }
-
-  ChannelHists::hist_per_chan_t& ChannelHists::GetChan(int ch){
-    if(!HasChan(ch)){std::cerr<<"chan "<<ch<<" has not been made"<<std::endl;exit;}
+  }/*}}}*/
+  ChannelHists::hist_per_chan_t& ChannelHists::GetChan(int ch){/*{{{*/
+    if(!HasChan(ch)){std::cerr<<"chan "<<ch<<" has not been made"<<std::endl;exit(1);}
     return chanhist[ch];
-  }
+  }/*}}}*/
 
 
 
-  AnalyseBurst::AnalyseBurst(Event& evt){
+  AnalyseBurst::AnalyseBurst(Event& evt){/*{{{*/
     for(int i=0;i<ChannelHists::gChanMax;++i)
       if(evt.HasChannel(i)){
         hists.MakeChan(i);
       }
-  }
-  AnalyseBurst::~AnalyseBurst(){ }
-
-  void AnalyseBurst::Process(Event& evt){
+  }/*}}}*/
+  void AnalyseBurst::Process(Event& evt){/*{{{*/
     for(Event::chan_iterator chan_it=evt.GetChannelsBegin();
         chan_it!=evt.GetChannelsEnd();
         ++chan_it){
@@ -90,10 +95,8 @@ namespace caen{
 
       hists.GetChan(chanId).integralOfPeakRegion->Fill(summ);
     }
-  }
-
-
-  void AnalyseBurst::Finish(){
+  }/*}}}*/
+  void AnalyseBurst::Finish(){/*{{{*/
     for(int channel_i=0;channel_i<ChannelHists::gChanMax;++channel_i){
       if(hists.HasChan(channel_i)){
         TF1* fitSinExp=new TF1("sinExp","[0]*exp(-0.5*((x-[1])/[2])*((x-[1])/[2]))*(sin(x*[3]+[4])+1)",200,1400);
@@ -118,20 +121,21 @@ namespace caen{
         hists.GetChan(channel_i).integralOfPeakRegion->Rebin(3);
         Int_t fitresi=Int_t(hists.GetChan(channel_i).integralOfPeakRegion->Fit("sinExp","W"));
 
-        if(fitresi)continue;
 
         const double fitSinGaus_A =fitSinExp->GetParameter(0);
         const double fitSinGaus_X0=fitSinExp->GetParameter(1);
         const double fitSinGaus_w =fitSinExp->GetParameter(2);
         const double fitSinGaus_a =fitSinExp->GetParameter(3);
         const double fitSinGaus_b =fitSinExp->GetParameter(4);
+        delete fitSinExp;
+        if(fitresi)continue;
 
 
         std::vector<TF1*> gausFunctions;
         int gaus_i;
         Int_t gausresi;
         do {
-          int gaus_i=gausFunctions.size();
+          gaus_i=gausFunctions.size();
           std::stringstream funcname;
           funcname<<"gaus_"<<gaus_i;
           TF1* fitGaus=new TF1(
@@ -162,36 +166,65 @@ namespace caen{
 
         std::stringstream channelssname;
         channelssname<<channel_i;
-        std::string photoElectronsName="photoElectrons_ch_"+channelssname.str();
-        std::string photoElectronsTitle="photo Electrons channel "+channelssname.str();
-        hists.GetChan(channel_i).photoElectrons=new TH1F(photoElectronsName.c_str(), photoElectronsTitle.c_str(), gaus_i*2, 0, gaus_i);
+
+        std::string photoElectronsName="photoElectronsPeaksMerged_ch_"+channelssname.str();
+        std::string photoElectronsTitle="photo Electron Peaks Merged channel "+channelssname.str();
+        hists.GetChan(channel_i).photoElectronPeaksMerged=new TH1F(photoElectronsName.c_str(), photoElectronsTitle.c_str(), gaus_i*2, 0, gaus_i);
+        //hists.GetChan(channel_i).photoElectronPeaksMerged2=new TH2F(photoElectronsName.c_str(), photoElectronsTitle.c_str(), gaus_i*2, 0, gaus_i,200,0,1000);
+        hists.GetChan(channel_i).photoElectronPeaksMerged2=new TH2F(photoElectronsName.c_str(), photoElectronsTitle.c_str(), 40, 0, 20,300,0,5000);
+        std::cout<<"gaus_i "<<gaus_i<<std::endl;
+
+        std::string gausMean_photoElectronsName="gausMean_photoElectrons_ch_"+channelssname.str();
+        std::string gausMean_photoElectronsTitle="gaus mean photo Electrons channel "+channelssname.str();
+        hists.GetChan(channel_i).gausMean_photoElectrons=new TH2F(gausMean_photoElectronsName.c_str(), gausMean_photoElectronsTitle.c_str(), 40, 0, 20,300,0,5000);
 
 
-        // HERE TODO:
-        // fill the histogram with integral of
-        // integralOfPeakRegin in funcSinGaus regions
-        //
-        // and
-        //
-        // gaus mean vs n ph electrons
+        //Double_t x[peak_i];
+        for(int peak_i=1;peak_i<=gaus_i;++peak_i){
 
 
 
+          hists.GetChan(channel_i).photoElectronPeaksMerged2->Fill(
+              peak_i,
+              hists.GetChan(channel_i).integralOfPeakRegion->Integral(
+                hists.GetChan(channel_i).integralOfPeakRegion->FindBin(
+                  ((2*peak_i-.5)*3.14-fitSinGaus_b)/fitSinGaus_a),
+                hists.GetChan(channel_i).integralOfPeakRegion->FindBin(
+                  ((2*peak_i+1.5)*3.14-fitSinGaus_b)/fitSinGaus_a)));
+          hists.GetChan(channel_i).photoElectronPeaksMerged->SetBinContent(
+              hists.GetChan(channel_i).photoElectronPeaksMerged->FindBin(peak_i),
+              hists.GetChan(channel_i).integralOfPeakRegion->Integral(
+                hists.GetChan(channel_i).integralOfPeakRegion->FindBin(
+                  ((2*peak_i-.5)*3.14-fitSinGaus_b)/fitSinGaus_a),
+                hists.GetChan(channel_i).integralOfPeakRegion->FindBin(
+                  ((2*peak_i+1.5)*3.14-fitSinGaus_b)/fitSinGaus_a)));
+
+          hists.GetChan(channel_i).gausMean_photoElectrons->Fill(
+          peak_i,
+          gausFunctions[peak_i-1]->GetParameter(1)
+          );
+          delete gausFunctions[peak_i-1];
+
+        }
       }
     }
-  }
-
-  void AnalyseBurst::WriteToFile(std::string filename){
+  }/*}}}*/
+  void AnalyseBurst::WriteToFile(std::string filename){/*{{{*/
     TFile* fRootFileP=new TFile(filename.c_str(),"recreate");
     for(int i=0;i<ChannelHists::gChanMax;++i){
       if(hists.HasChan(i)){
         fRootFileP->CurrentDirectory()->WriteTObject(hists.GetChan(i).cumulativeSignalPlot);
         fRootFileP->CurrentDirectory()->WriteTObject(hists.GetChan(i).integralOfPeakRegion);
+        if(hists.GetChan(i).photoElectronPeaksMerged)fRootFileP->CurrentDirectory()->WriteTObject(hists.GetChan(i).photoElectronPeaksMerged);
+        if(hists.GetChan(i).photoElectronPeaksMerged2)fRootFileP->CurrentDirectory()->WriteTObject(hists.GetChan(i).photoElectronPeaksMerged2);
+        if(hists.GetChan(i).gausMean_photoElectrons )fRootFileP->CurrentDirectory()->WriteTObject(hists.GetChan(i).gausMean_photoElectrons);
+        if(hists.GetChan(i).photPeakMer             )fRootFileP->CurrentDirectory()->WriteTObject(hists.GetChan(i).photPeakMer     );
+        if(hists.GetChan(i).gausMeanPhotElec        )fRootFileP->CurrentDirectory()->WriteTObject(hists.GetChan(i).gausMeanPhotElec);
       }
     }
     fRootFileP->Write();
     fRootFileP->Close();
     delete fRootFileP;
-  }
+  }/*}}}*/
 
 };

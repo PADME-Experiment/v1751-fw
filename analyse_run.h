@@ -2,6 +2,7 @@
 #define _caen_analyse_run_h_
 
 #include"caen_raw.h"
+#include"analyse_burst.h"
 
 
 
@@ -18,10 +19,20 @@
 namespace caen{
   class AnalyseRun{
     public:
+      AnalyseRun();
+      ~AnalyseRun();
       void Init();
-      void Process();
+      void Process(ChannelHists&);
       void Finish();
+      void WriteToFile(std::string filename);
+
+      typedef struct{
+        TH2F* photoElectronPeaksMerged2;
+        TH2F* gausMean_photoElectrons;
+      }hist_per_chan_t;
+      static const int gChanMax=8;
     private:
+      hist_per_chan_t hists[gChanMax];
   };
 };
 #endif
