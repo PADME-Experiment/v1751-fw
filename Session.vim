@@ -20,6 +20,8 @@ noremap gn :silent tabnew
 noremap OA gk
 noremap OB gj
 noremap Y y$
+kkookk
+ooo
 nmap gx <Plug>NetrwBrowseX
 nnoremap <silent> <Plug>NetrwBrowseX :call netrw#NetrwBrowseX(expand("<cWORD>"),0)
 map <C-F12> :!ctags -R --sort=yes --c++-kinds=+p --fields=+iaS --extra=+q .
