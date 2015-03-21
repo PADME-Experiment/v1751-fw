@@ -19,22 +19,20 @@
 namespace caen{
   class AnalyseRun{
     public:
+      static const int fNGausMax=20;
       AnalyseRun();
       ~AnalyseRun();
       void Init();
-      void Process(ChannelHists&);
+      void Process(AnalyseBurst::ChannelHists&);
       void Finish();
       void WriteToFile(std::string filename);
 
-      typedef struct{
-        TH2F* photoElectronPeaksMerged2;
-        TH2F* gausMean_photoElectrons;
-        TH2F* gausAmplitude_photoElectrons;
-        TH2F* gausSigma_photoElectrons;
-      }hist_per_chan_t;
-      static const int gChanMax=8;
     private:
-      hist_per_chan_t hists[gChanMax];
+        double gaus_A_vs_burstId[2/** 0=val 1=err*/][fNGausMax];
+        double gaus_X_vs_burstId[2/** 0=val 1=err*/][fNGausMax];
+        double gaus_W_vs_burstId[2/** 0=val 1=err*/][fNGausMax];
+
+      //hist_per_chan_t hists[v1751_const::gChanMax];
   };
 };
 #endif

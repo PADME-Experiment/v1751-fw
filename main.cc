@@ -8,6 +8,7 @@
 namespace caen{
 
   int gDebug;
+  int gNBursts;
   std::string gOutputRootFile;
 };
 
@@ -52,7 +53,7 @@ int main(int argc, char* argv[]) {
       if(tmpstring.size()>0) inputFiles.push_back(tmpstring);
     }
   }
-
+  caen::gNBursts=inputFiles.size();
 
   caen::AnalyseRun anarun;
   anarun.Init();

@@ -1,9 +1,15 @@
 #include"analyse_run.h"
 #include"analyse_burst.h"
+#include"main.h"
+#include<TF1.h>
+
+#include<list>
 
 namespace caen{
   AnalyseRun::AnalyseRun(){
-    for(int channel_i=0;channel_i<gChanMax;++channel_i){
+    for(int channel_i=0;channel_i<v1751_const::gChanMax;++channel_i){
+
+      /*{{{
       std::stringstream channelssname;
       channelssname<<channel_i;
 
@@ -29,6 +35,7 @@ hists[channel_i].gausAmplitude_photoElectrons->SetMarkerStyle(6);
 hists[channel_i].gausSigma_photoElectrons->SetMarkerStyle(6);
 hists[channel_i].photoElectronPeaksMerged2->SetMarkerStyle(6);
 
+}}}*/
     }
   }
   AnalyseRun::~AnalyseRun(){
@@ -36,32 +43,55 @@ hists[channel_i].photoElectronPeaksMerged2->SetMarkerStyle(6);
 
 
   void AnalyseRun::Init(){ }
-  void AnalyseRun::Process(ChannelHists& bursthists){
-    for(int channel_i=0;channel_i<gChanMax;++channel_i){
-      if(!  bursthists.HasChan(channel_i) )return;
+  void AnalyseRun::Process(AnalyseBurst::ChannelHists& burstAllHists){
+    for(int channel_i=0;channel_i<v1751_const::gChanMax;++channel_i){
+      if(!  burstAllHists.HasChan(channel_i) )return;
+      AnalyseBurst::ChannelHists::hist_per_chan_t&
+        burstChanHists = burstAllHists.GetChan(channel_i);
 
-if(bursthists.GetChan(channel_i).photoElectronPeaksMerged2)         hists[channel_i].photoElectronPeaksMerged2   ->  Add(bursthists.GetChan(channel_i).photoElectronPeaksMerged2);
-if(bursthists.GetChan(channel_i).gausMean_photoElectrons)           hists[channel_i].gausMean_photoElectrons     ->  Add(bursthists.GetChan(channel_i).gausMean_photoElectrons);
-if(bursthists.GetChan(channel_i).gausAmplitude_photoElectrons)      hists[channel_i].gausAmplitude_photoElectrons->  Add(bursthists.GetChan(channel_i).gausAmplitude_photoElectrons);
-if(bursthists.GetChan(channel_i).gausSigma_photoElectrons)      hists[channel_i].gausSigma_photoElectrons->  Add(bursthists.GetChan(channel_i).gausSigma_photoElectrons);
+      int gaus_i=0;
+      for( AnalyseBurst::ChannelHists::gausFuncIter_t
+          gaus_it=burstChanHists.gausFunctions.begin();
+          gaus_it!=burstChanHists.gausFunctions.end();
+          ++gaus_it,++gaus_i){
+        TF1* gausf=*gaus_it;
+        gaus_A_vs_burstId[0][gaus_i]=gausf->GetParameter(0);
+        gaus_A_vs_burstId[1][gaus_i]=gausf->GetParError (0);
+        gaus_X_vs_burstId[0][gaus_i]=gausf->GetParameter(1);
+        gaus_X_vs_burstId[1][gaus_i]=gausf->GetParError (1);
+        gaus_W_vs_burstId[0][gaus_i]=gausf->GetParameter(2);
+        gaus_W_vs_burstId[1][gaus_i]=gausf->GetParError (2);
+      }
 
 
+
+
+      /*
+         {{{
+         if(bursthists.GetChan(channel_i).photoElectronPeaksMerged2)         hists[channel_i].photoElectronPeaksMerged2   ->  Add(bursthists.GetChan(channel_i).photoElectronPeaksMerged2);
+         if(bursthists.GetChan(channel_i).gausMean_photoElectrons)           hists[channel_i].gausMean_photoElectrons     ->  Add(bursthists.GetChan(channel_i).gausMean_photoElectrons);
+         if(bursthists.GetChan(channel_i).gausAmplitude_photoElectrons)      hists[channel_i].gausAmplitude_photoElectrons->  Add(bursthists.GetChan(channel_i).gausAmplitude_photoElectrons);
+         if(bursthists.GetChan(channel_i).gausSigma_photoElectrons)      hists[channel_i].gausSigma_photoElectrons->  Add(bursthists.GetChan(channel_i).gausSigma_photoElectrons);
+
+
+         }}}
+       */
 
 
 
     }
   }
-  void AnalyseRun::Finish(){ }
-  void AnalyseRun::WriteToFile(std::string filename){
-    TFile* fRootFileP=new TFile(filename.c_str(),"recreate");
-    for(int i=0;i<gChanMax;++i){
-      if(hists[i].photoElectronPeaksMerged2    )fRootFileP->CurrentDirectory()->WriteTObject(hists[i].photoElectronPeaksMerged2);
-      if(hists[i].gausMean_photoElectrons      )fRootFileP->CurrentDirectory()->WriteTObject(hists[i].gausMean_photoElectrons);
-      if(hists[i].gausAmplitude_photoElectrons )fRootFileP->CurrentDirectory()->WriteTObject(hists[i].gausAmplitude_photoElectrons);
-      if(hists[i].gausSigma_photoElectrons     )fRootFileP->CurrentDirectory()->WriteTObject(hists[i].gausSigma_photoElectrons);
-    }
-    fRootFileP->Write();
-    fRootFileP->Close();
-    delete fRootFileP;
+void AnalyseRun::Finish(){ }
+void AnalyseRun::WriteToFile(std::string filename){
+  TFile* fRootFileP=new TFile(filename.c_str(),"recreate");
+  for(int i=0;i<v1751_const::gChanMax;++i){
+    //if(hists[i].photoElectronPeaksMerged2    )fRootFileP->CurrentDirectory()->WriteTObject(hists[i].photoElectronPeaksMerged2);
+    //if(hists[i].gausMean_photoElectrons      )fRootFileP->CurrentDirectory()->WriteTObject(hists[i].gausMean_photoElectrons);
+    //if(hists[i].gausAmplitude_photoElectrons )fRootFileP->CurrentDirectory()->WriteTObject(hists[i].gausAmplitude_photoElectrons);
+    //if(hists[i].gausSigma_photoElectrons     )fRootFileP->CurrentDirectory()->WriteTObject(hists[i].gausSigma_photoElectrons);
   }
+  fRootFileP->Write();
+  fRootFileP->Close();
+  delete fRootFileP;
+}
 }

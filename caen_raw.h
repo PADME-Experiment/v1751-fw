@@ -131,6 +131,9 @@ namespace caen{
       uint32_t     fEventSize;  // in uint32_t words w/o header
       std::vector<int /** seq num for Ids of collecting data channels*/ > fChannelIdMap;
   };/*}}}*/
+  namespace v1751_const{
+      static const int gChanMax=8;
+  };
 };
 
 
