@@ -6,7 +6,6 @@
 #include<vector>
 
 namespace caen{
-
   int gDebug;
   int gNBursts;
   std::string gOutputRootFile;
@@ -82,6 +81,7 @@ int main(int argc, char* argv[]) {
 
   }
   anarun.Finish();
+
   anarun.WriteToFile(caen::gOutputRootFile);
 
 

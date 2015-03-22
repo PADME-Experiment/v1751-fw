@@ -1,97 +1,106 @@
 #include"analyse_run.h"
 #include"analyse_burst.h"
 #include"main.h"
+
 #include<TF1.h>
+#include<TFile.h>
+#include<TDirectory.h>
 
 #include<list>
+#include<string>
 
 namespace caen{
-  AnalyseRun::AnalyseRun(){
-    for(int channel_i=0;channel_i<v1751_const::gChanMax;++channel_i){
+  AnalyseRun::AnalyseRun(){/*{{{*/
+    fBurst_i=0;
+    for(int chan_i=0;chan_i<v1751_const::gChanMax;chan_i++){
+      std::stringstream chan_i_ss;
+      chan_i_ss<<chan_i;
+      std::string dirName="chan_"+chan_i_ss.str();
+      for(int gaus_i=0;gaus_i<fNGausMax;gaus_i++){
+        std::stringstream gaus_i_ss;
+        gaus_i_ss<<gaus_i;
+        std::string histName,histTitle;
 
-      /*{{{
-      std::stringstream channelssname;
-      channelssname<<channel_i;
+        histName="Agaus_"+gaus_i_ss.str()+"_ch_"+chan_i_ss.str()+"_vs_burstId";
+        histTitle="gaus "+gaus_i_ss.str()+" A vs burstId chan "+chan_i_ss.str();
+        gausPars_vs_burstId_hists[chan_i][gaus_i][0]=new TH1F(
+            histName.c_str(),histTitle.c_str(),(gNBursts+2)*2,0,gNBursts+2);
 
-      std::string photoElectronsName="photoElectronsPeaksMerged_ch_"+channelssname.str();
-      std::string photoElectronsTitle="photo Electron Peaks Merged channel "+channelssname.str();
-      hists[channel_i].photoElectronPeaksMerged2=new TH2F(photoElectronsName.c_str(), photoElectronsTitle.c_str(), 40, 0, 20,5000,0,5000);
+        histName="Xgaus_"+gaus_i_ss.str()+"_ch_"+chan_i_ss.str()+"_vs_burstId";
+        histTitle="gaus X0 vs burstId chan "+chan_i_ss.str();
+        gausPars_vs_burstId_hists[chan_i][gaus_i][1]=new TH1F(
+            histName.c_str(),histTitle.c_str(),(gNBursts+2)*2,0,gNBursts+2);
 
-      std::string gausMean_photoElectronsName="gausMean_photoElectrons_ch_"+channelssname.str();
-      std::string gausMean_photoElectronsTitle="gaus mean photo Electrons channel "+channelssname.str();
-      hists[channel_i].gausMean_photoElectrons=new TH2F(gausMean_photoElectronsName.c_str(), gausMean_photoElectronsTitle.c_str(), 40, 0, 20,500,0,5000);
-
-      std::string gausAmpl_photoElectronsName="gausAmplitude_photoElectrons_ch_"+channelssname.str();
-      std::string gausAmpl_photoElectronsTitle="gaus Amplitude photo Electrons channel "+channelssname.str();
-      hists[channel_i].gausAmplitude_photoElectrons=new TH2F(gausAmpl_photoElectronsName.c_str(), gausAmpl_photoElectronsTitle.c_str(), 40, 0, 20,5000,0,5000);
-
-      std::string gausSig_photoElectronsName="gausSigma_photoElectrons_ch_"+channelssname.str();
-      std::string gausSig_photoElectronsTitle="gaus Sigma photo Electrons channel "+channelssname.str();
-      hists[channel_i].gausSigma_photoElectrons=new TH2F(gausSig_photoElectronsName.c_str(), gausSig_photoElectronsTitle.c_str(), 40, 0, 20,500,0,500);
-
-
-hists[channel_i].gausMean_photoElectrons->SetMarkerStyle(6);
-hists[channel_i].gausAmplitude_photoElectrons->SetMarkerStyle(6);
-hists[channel_i].gausSigma_photoElectrons->SetMarkerStyle(6);
-hists[channel_i].photoElectronPeaksMerged2->SetMarkerStyle(6);
-
-}}}*/
+        histName="Wgaus_"+gaus_i_ss.str()+"_ch_"+chan_i_ss.str()+"_vs_burstId";
+        histTitle="gaus W vs burstId chan "+chan_i_ss.str();
+        gausPars_vs_burstId_hists[chan_i][gaus_i][2]=new TH1F(
+            histName.c_str(),histTitle.c_str(),(gNBursts+2)*2,0,gNBursts+2);
+      }
     }
-  }
-  AnalyseRun::~AnalyseRun(){
-  }
+  }/*}}}*/
 
+  AnalyseRun::~AnalyseRun(){ }
 
   void AnalyseRun::Init(){ }
-  void AnalyseRun::Process(AnalyseBurst::ChannelHists& burstAllHists){
+
+  void AnalyseRun::Process(AnalyseBurst::ChannelHists& burstAllHists){/*{{{*/
+    fBurst_i++;
     for(int channel_i=0;channel_i<v1751_const::gChanMax;++channel_i){
       if(!  burstAllHists.HasChan(channel_i) )return;
       AnalyseBurst::ChannelHists::hist_per_chan_t&
         burstChanHists = burstAllHists.GetChan(channel_i);
-
       int gaus_i=0;
       for( AnalyseBurst::ChannelHists::gausFuncIter_t
           gaus_it=burstChanHists.gausFunctions.begin();
           gaus_it!=burstChanHists.gausFunctions.end();
           ++gaus_it,++gaus_i){
         TF1* gausf=*gaus_it;
-        gaus_A_vs_burstId[0][gaus_i]=gausf->GetParameter(0);
-        gaus_A_vs_burstId[1][gaus_i]=gausf->GetParError (0);
-        gaus_X_vs_burstId[0][gaus_i]=gausf->GetParameter(1);
-        gaus_X_vs_burstId[1][gaus_i]=gausf->GetParError (1);
-        gaus_W_vs_burstId[0][gaus_i]=gausf->GetParameter(2);
-        gaus_W_vs_burstId[1][gaus_i]=gausf->GetParError (2);
+        //gaus_A_vs_burstId[0][gaus_i]=gausf->GetParameter(0);
+        //gaus_A_vs_burstId[1][gaus_i]=gausf->GetParError (0);
+        //gaus_X_vs_burstId[0][gaus_i]=gausf->GetParameter(1);
+        //gaus_X_vs_burstId[1][gaus_i]=gausf->GetParError (1);
+        //gaus_W_vs_burstId[0][gaus_i]=gausf->GetParameter(2);
+        //gaus_W_vs_burstId[1][gaus_i]=gausf->GetParError (2);
+
+        gausPars_vs_burstId_hists[channel_i][gaus_i][0]->SetBinContent(
+            fBurst_i,gausf->GetParameter(0));
+        gausPars_vs_burstId_hists[channel_i][gaus_i][0]->SetBinError  (
+            fBurst_i,gausf->GetParError (0));
+        gausPars_vs_burstId_hists[channel_i][gaus_i][1]->SetBinContent(
+            fBurst_i,gausf->GetParameter(1));
+        gausPars_vs_burstId_hists[channel_i][gaus_i][1]->SetBinError  (
+            fBurst_i,gausf->GetParError (1));
+        gausPars_vs_burstId_hists[channel_i][gaus_i][2]->SetBinContent(
+            fBurst_i,gausf->GetParameter(2));
+        gausPars_vs_burstId_hists[channel_i][gaus_i][2]->SetBinError  (
+            fBurst_i,gausf->GetParError (2));
       }
-
-
-
-
-      /*
-         {{{
-         if(bursthists.GetChan(channel_i).photoElectronPeaksMerged2)         hists[channel_i].photoElectronPeaksMerged2   ->  Add(bursthists.GetChan(channel_i).photoElectronPeaksMerged2);
-         if(bursthists.GetChan(channel_i).gausMean_photoElectrons)           hists[channel_i].gausMean_photoElectrons     ->  Add(bursthists.GetChan(channel_i).gausMean_photoElectrons);
-         if(bursthists.GetChan(channel_i).gausAmplitude_photoElectrons)      hists[channel_i].gausAmplitude_photoElectrons->  Add(bursthists.GetChan(channel_i).gausAmplitude_photoElectrons);
-         if(bursthists.GetChan(channel_i).gausSigma_photoElectrons)      hists[channel_i].gausSigma_photoElectrons->  Add(bursthists.GetChan(channel_i).gausSigma_photoElectrons);
-
-
-         }}}
-       */
-
-
-
     }
-  }
-void AnalyseRun::Finish(){ }
-void AnalyseRun::WriteToFile(std::string filename){
-  TFile* fRootFileP=new TFile(filename.c_str(),"recreate");
-  for(int i=0;i<v1751_const::gChanMax;++i){
-    //if(hists[i].photoElectronPeaksMerged2    )fRootFileP->CurrentDirectory()->WriteTObject(hists[i].photoElectronPeaksMerged2);
-    //if(hists[i].gausMean_photoElectrons      )fRootFileP->CurrentDirectory()->WriteTObject(hists[i].gausMean_photoElectrons);
-    //if(hists[i].gausAmplitude_photoElectrons )fRootFileP->CurrentDirectory()->WriteTObject(hists[i].gausAmplitude_photoElectrons);
-    //if(hists[i].gausSigma_photoElectrons     )fRootFileP->CurrentDirectory()->WriteTObject(hists[i].gausSigma_photoElectrons);
-  }
-  fRootFileP->Write();
-  fRootFileP->Close();
-  delete fRootFileP;
-}
+  } /*}}}*/ //AnalyseRun::Process
+
+  void AnalyseRun::Finish(){ }
+
+  void AnalyseRun::WriteToFile(std::string outFileName){/*{{{*/
+    fRootFileP=new TFile(outFileName.c_str(),"recreate");
+    for(int chan_i=0;chan_i<v1751_const::gChanMax;++chan_i){
+      std::stringstream chan_i_ss;
+      chan_i_ss<<chan_i;
+      std::string dirName="chan_"+chan_i_ss.str();
+      TDirectory* fileDir=fRootFileP;
+      TDirectory* dirchan=fileDir->mkdir(dirName.c_str());
+      TDirectory* dirgauspars=dirchan->mkdir("gausPars_vs_burstId");
+      for(int gaus_i=0;gaus_i<fNGausMax;++gaus_i){
+        for(int var_i=0;var_i<3;++var_i){
+          dirgauspars->cd();
+          if(gausPars_vs_burstId_hists[chan_i][gaus_i][var_i]){
+            gausPars_vs_burstId_hists[chan_i][gaus_i][var_i]->Write();
+            delete gausPars_vs_burstId_hists[chan_i][gaus_i][var_i];
+          }
+        }
+      }
+    }
+    fRootFileP->Write();
+    fRootFileP->Close();
+    delete fRootFileP;
+  }/*}}}*/ //WriteToFile
 }

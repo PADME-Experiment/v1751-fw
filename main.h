@@ -3,8 +3,6 @@
 
 #include<string>
 
-
-
 namespace caen{
   extern int gDebug;
   extern std::string gOutputRootFile;

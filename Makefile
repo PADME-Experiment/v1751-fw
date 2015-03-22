@@ -21,7 +21,7 @@ all: $(EXEC)
 $(EXEC): $(OBJFILES)
 	$(CC) $(ROOTCLIBS) $(OBJFILES) -o $@
 
-$(OBJFILES):%.o : %.cc  %.h
+$(OBJFILES):%.o : %.cc *.h  #%.h
 	$(CC) $(CFLAGS) $(ROOTCFLAGS) -c $< -o $@
 
 clean:

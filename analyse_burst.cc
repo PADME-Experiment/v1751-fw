@@ -1,20 +1,17 @@
 #include"analyse_burst.h"
-
 #include"main.h"
 #include"caen_raw.h"
 
-#include<sstream>
-#include<vector>
 #include<list>
+#include<sstream>
 #include<string>
+#include<vector>
 
 
 #include<TF1.h>
-#include<TMath.h>
-//#include<Fit/FitResult.h>
-//#include<TFitResultPtr.h>
 #include<TFitResult.h>
 #include<TGraphErrors.h>
+#include<TMath.h>
 
 
 
@@ -129,7 +126,6 @@ namespace caen{
         fHists.GetChan(channel_i).integralOfPeakRegion->Rebin(3);
         Int_t fitresi=Int_t(fHists.GetChan(channel_i).integralOfPeakRegion->Fit("sinExp","W"));
 
-
         const double fitSinGaus_A =fitSinExp->GetParameter(0);
         const double fitSinGaus_X0=fitSinExp->GetParameter(1);
         const double fitSinGaus_w =fitSinExp->GetParameter(2);
@@ -138,14 +134,11 @@ namespace caen{
         delete fitSinExp;
         if(fitresi)continue;
 
-
-        //std::vector<TF1*> gausFunctions;
         int gaus_i=0;
         Int_t gausresi;
         TFitResultPtr gausFitRes;
         TF1* fitGaus;
         do {
-          //gaus_i=gausFunctions.size();
           std::stringstream funcname;
           funcname<<"gaus_"<<gaus_i;
           fitGaus=new TF1(
@@ -170,7 +163,6 @@ namespace caen{
 
           gausFitRes=fHists.GetChan(channel_i).integralOfPeakRegion->Fit(funcname.str().c_str(),"R+");
           gausresi=Int_t(gausFitRes);
-
           //gausresi=Int_t(fHists.GetChan(channel_i).integralOfPeakRegion->Fit(fitGaus,"BR+"));
           std::cout<<gaus_i<<" "<<gausresi<<std::endl;
           gaus_i++;
@@ -178,8 +170,6 @@ namespace caen{
       }
     }
   }/*}}}*/
-
-
 
   void AnalyseBurst::WriteToFile(std::string filename){/*{{{*/
     TFile* fRootFileP=new TFile(filename.c_str(),"recreate");

@@ -3,32 +3,22 @@
 
 #include"caen_raw.h"
 
-
-
-#include<iostream>
-#include<map>
-#include<list>
-
-//#include<TCanvas.h>
+#include<TDirectory.h>
+#include<TFile.h>
+#include<TGraphErrors.h>
 #include<TH1F.h>
 #include<TH2F.h>
-#include<TFile.h>
-#include<TDirectory.h>
-#include<TGraphErrors.h>
 
-
-
-
-#include<iostream>
-#include<sstream>
 #include<fstream>
+#include<getopt.h>
+#include<iomanip>
+#include<iostream>
+#include<list>
+#include<map>
+#include<sstream>
 #include<stdio.h>
 #include<stdlib.h>
-#include<getopt.h>
 #include<vector>
-#include<map>
-#include<iomanip>
-#include<fstream>
 
 
 namespace caen{
