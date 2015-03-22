@@ -37,20 +37,21 @@ namespace caen{
             gausFuncList_t       gausFunctions;
             //TH1F*            photoElectronPeaksMerged;
             //TH2F*            photoElectronPeaksMerged2;
-            //TH2F*            gausMean_photoElectrons;
-            //TH2F*            gausAmplitude_photoElectrons;
-            //TH2F*            gausSigma_photoElectrons;
+            TH1F*            gausMean_photoElectrons;
+            TH1F*            gausAmplitude_photoElectrons;
+            TH1F*            gausSigma_photoElectrons;
             //TGraphErrors*    photPeakMer;
             //TGraphErrors*    gausMeanPhotElec;
-          }hist_per_chan_t;
+          }hists_per_chan_t;
           ChannelHists();
           ~ChannelHists();
           void              MakeChan(int  ch);
-          hist_per_chan_t&  GetChan(int   ch);
+          hists_per_chan_t&  GetChan(int   ch);
           bool              HasChan(int   ch);
 
         private:
-          hist_per_chan_t chanhist[v1751_const::gChanMax];
+          hists_per_chan_t chanhist[v1751_const::gChanMax];
+          bool fHasChan[v1751_const::gChanMax];//TODO
       };
       AnalyseBurst(Event& evt);
       ~AnalyseBurst();

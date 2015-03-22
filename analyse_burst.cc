@@ -29,9 +29,9 @@ namespace caen{
         delete chanhist[i].integralOfPeakRegion;
         //delete chanhist[i].photoElectronPeaksMerged;
         //delete chanhist[i].photoElectronPeaksMerged2;
-        //delete chanhist[i].gausMean_photoElectrons;
-        //delete chanhist[i].gausAmplitude_photoElectrons;
-        //delete chanhist[i].gausSigma_photoElectrons;
+        delete chanhist[i].gausMean_photoElectrons;
+        delete chanhist[i].gausAmplitude_photoElectrons;
+        delete chanhist[i].gausSigma_photoElectrons;
         //delete chanhist[i].photPeakMer;
         //delete chanhist[i].gausMeanPhotElec;
       }
@@ -57,9 +57,11 @@ namespace caen{
 
     //chanhist[ch].photoElectronPeaksMerged=0;
     //chanhist[ch].photoElectronPeaksMerged2=0;
-    //chanhist[ch].gausMean_photoElectrons=0;
-    //chanhist[ch].gausAmplitude_photoElectrons=0;
-    //chanhist[ch].gausSigma_photoElectrons=0;
+
+
+namestr="gausMean_photoElectrons_ch_"+channame.str();       chanhist[ch].gausMean_photoElectrons     = new TH1F (namestr.c_str(),namestr.c_str(),20,0,20);
+namestr="gausAmplitude_photoElectrons_ch_"+channame.str(); chanhist[ch].gausAmplitude_photoElectrons= new TH1F (namestr.c_str(),namestr.c_str(),20,0,20);
+namestr="gausSigma_photoElectrons_ch_"+channame.str();      chanhist[ch].gausSigma_photoElectrons    = new TH1F (namestr.c_str(),namestr.c_str(),20,0,20);
 
     //chanhist[ch].photPeakMer=0;
     //chanhist[ch].gausMeanPhotElec=0;
@@ -67,7 +69,7 @@ namespace caen{
   bool AnalyseBurst::ChannelHists::HasChan(int ch){/*{{{*/
     return chanhist[ch].hasChan;
   }/*}}}*/
-  AnalyseBurst::ChannelHists::hist_per_chan_t& AnalyseBurst::ChannelHists::GetChan(int ch){/*{{{*/
+  AnalyseBurst::ChannelHists::hists_per_chan_t& AnalyseBurst::ChannelHists::GetChan(int ch){/*{{{*/
     if(!HasChan(ch)){std::cerr<<"chan "<<ch<<" has not been made"<<std::endl;exit(1);}
     return chanhist[ch];
   }/*}}}*/
@@ -80,6 +82,7 @@ namespace caen{
         fHists.MakeChan(i);
       }
   }/*}}}*/
+
   void AnalyseBurst::Process(Event& evt){/*{{{*/
     for(Event::chan_iterator chan_it=evt.GetChannelsBegin();
         chan_it!=evt.GetChannelsEnd();
@@ -165,7 +168,18 @@ namespace caen{
           gausresi=Int_t(gausFitRes);
           //gausresi=Int_t(fHists.GetChan(channel_i).integralOfPeakRegion->Fit(fitGaus,"BR+"));
           std::cout<<gaus_i<<" "<<gausresi<<std::endl;
+
           gaus_i++;
+
+        fHists.GetChan(channel_i).gausMean_photoElectrons     ->SetBinContent(gaus_i,fitGaus->GetParameter(0));
+        fHists.GetChan(channel_i).gausAmplitude_photoElectrons->SetBinContent(gaus_i,fitGaus->GetParameter(1));
+        fHists.GetChan(channel_i).gausSigma_photoElectrons    ->SetBinContent(gaus_i,fitGaus->GetParameter(2));
+
+        fHists.GetChan(channel_i).gausMean_photoElectrons     ->SetBinError(gaus_i,fitGaus->GetParError(0));
+        fHists.GetChan(channel_i).gausAmplitude_photoElectrons->SetBinError(gaus_i,fitGaus->GetParError(1));
+        fHists.GetChan(channel_i).gausSigma_photoElectrons    ->SetBinError(gaus_i,fitGaus->GetParError(2));
+
+
         } while (gausresi==0);
       }
     }
@@ -173,10 +187,22 @@ namespace caen{
 
   void AnalyseBurst::WriteToFile(std::string filename){/*{{{*/
     TFile* fRootFileP=new TFile(filename.c_str(),"recreate");
-    for(int i=0;i<v1751_const::gChanMax;++i){
-      if(fHists.HasChan(i)){
-        fRootFileP->CurrentDirectory()->WriteTObject(fHists.GetChan(i).cumulativeSignalPlot);
-        fRootFileP->CurrentDirectory()->WriteTObject(fHists.GetChan(i).integralOfPeakRegion);
+    for(int chan_i=0;chan_i<v1751_const::gChanMax;++chan_i){
+      if(fHists.HasChan(chan_i)){
+        TDirectory* fileDir=fRootFileP;
+        std::stringstream chan_i_ss;
+        chan_i_ss<<chan_i;
+        std::string dirName="chan_"+chan_i_ss.str();
+        TDirectory* dirchan=fileDir->mkdir(dirName.c_str());
+        dirchan->cd();
+
+        ChannelHists::hists_per_chan_t& chanhist=fHists.GetChan(chan_i);
+        chanhist.integralOfPeakRegion->Write();
+        chanhist.cumulativeSignalPlot->Write();
+        chanhist.gausMean_photoElectrons       ->Write();
+        chanhist.gausAmplitude_photoElectrons  ->Write();
+        chanhist.gausSigma_photoElectrons      ->Write();
+
       }
     }
     fRootFileP->Write();
@@ -185,6 +211,17 @@ namespace caen{
   }/*}}}*/
 
   AnalyseBurst::~AnalyseBurst(){/*{{{*/
-
+    for(int chan_i=0;chan_i<v1751_const::gChanMax;++chan_i){
+      if(fHists.HasChan(chan_i)){
+        ChannelHists::hists_per_chan_t& chanhist=fHists.GetChan(chan_i);
+        for(
+            ChannelHists::gausFuncIter_t
+            gaus_it=chanhist.gausFunctions.begin();
+            gaus_it!=chanhist.gausFunctions.end();
+            ++gaus_it){
+          delete *gaus_it;
+        }
+      }
+    }
   }/*}}}*/
 };

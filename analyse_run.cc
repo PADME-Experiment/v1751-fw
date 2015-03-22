@@ -38,8 +38,13 @@ namespace caen{
       }
     }
   }/*}}}*/
-
-  AnalyseRun::~AnalyseRun(){ }
+  AnalyseRun::~AnalyseRun(){/*{{{*/
+    for(int chan_i=0;chan_i<v1751_const::gChanMax;++chan_i)
+      for(int gaus_i=0;gaus_i<fNGausMax;++gaus_i)
+        for(int var_i=0;var_i<3;++var_i)
+          if(gausPars_vs_burstId_hists[chan_i][gaus_i][var_i])
+            delete gausPars_vs_burstId_hists[chan_i][gaus_i][var_i];
+  }/*}}}*/
 
   void AnalyseRun::Init(){ }
 
@@ -47,7 +52,7 @@ namespace caen{
     fBurst_i++;
     for(int channel_i=0;channel_i<v1751_const::gChanMax;++channel_i){
       if(!  burstAllHists.HasChan(channel_i) )return;
-      AnalyseBurst::ChannelHists::hist_per_chan_t&
+      AnalyseBurst::ChannelHists::hists_per_chan_t&
         burstChanHists = burstAllHists.GetChan(channel_i);
       int gaus_i=0;
       for( AnalyseBurst::ChannelHists::gausFuncIter_t
@@ -78,7 +83,8 @@ namespace caen{
     }
   } /*}}}*/ //AnalyseRun::Process
 
-  void AnalyseRun::Finish(){ }
+  void AnalyseRun::Finish(){
+  }
 
   void AnalyseRun::WriteToFile(std::string outFileName){/*{{{*/
     fRootFileP=new TFile(outFileName.c_str(),"recreate");
@@ -89,12 +95,11 @@ namespace caen{
       TDirectory* fileDir=fRootFileP;
       TDirectory* dirchan=fileDir->mkdir(dirName.c_str());
       TDirectory* dirgauspars=dirchan->mkdir("gausPars_vs_burstId");
+      dirgauspars->cd();
       for(int gaus_i=0;gaus_i<fNGausMax;++gaus_i){
         for(int var_i=0;var_i<3;++var_i){
-          dirgauspars->cd();
           if(gausPars_vs_burstId_hists[chan_i][gaus_i][var_i]){
             gausPars_vs_burstId_hists[chan_i][gaus_i][var_i]->Write();
-            delete gausPars_vs_burstId_hists[chan_i][gaus_i][var_i];
           }
         }
       }

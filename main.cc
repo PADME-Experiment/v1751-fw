@@ -16,6 +16,8 @@ int main(int argc, char* argv[]) {
   std::vector<std::string> inputFiles,inputLists;
   std::string tmpstring;
 
+  caen::gDebug=1; // default value
+
   while ((opt = getopt(argc, argv, ":i:l:o:d:")) != -1){
     switch (opt){
       case 'i': tmpstring=optarg;inputFiles.push_back(tmpstring);break;
@@ -72,12 +74,12 @@ int main(int argc, char* argv[]) {
     anaburst.Finish();
     anarun.Process(anaburst.GetHists());
 
-    //if(gDebug>0){
+    if(caen::gDebug>0){
       std::string burstrootfn=filename+".root";
       burstrootfn.erase(0,burstrootfn.find_last_of('/')+1);
       std::cout<<burstrootfn<<std::endl;
       anaburst.WriteToFile(burstrootfn);
-    //}
+    }
 
   }
   anarun.Finish();
