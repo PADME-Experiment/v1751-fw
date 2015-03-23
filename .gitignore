@@ -11,6 +11,7 @@ analyser
 *.lo
 *.o
 *.obj
+Session.vim
 
 # Precompiled Headers
 *.gch
