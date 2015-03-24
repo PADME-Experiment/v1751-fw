@@ -30,28 +30,27 @@ namespace caen{
         public:
         typedef std::list<TF1*> gausFuncList_t;
         typedef std::list<TF1*>::iterator gausFuncIter_t;
-          typedef struct{
-            bool             hasChan;
-            TH2F*            cumulativeSignalPlot;
-            TH1F*            integralOfPeakRegion;
-            gausFuncList_t       gausFunctions;
-            //TH1F*            photoElectronPeaksMerged;
-            //TH2F*            photoElectronPeaksMerged2;
-            TH1F*            gausMean_photoElectrons;
-            TH1F*            gausAmplitude_photoElectrons;
-            TH1F*            gausSigma_photoElectrons;
-            //TGraphErrors*    photPeakMer;
-            //TGraphErrors*    gausMeanPhotElec;
-          }hists_per_chan_t;
-          ChannelHists();
-          ~ChannelHists();
-          void              MakeChan(int  ch);
-          hists_per_chan_t&  GetChan(int   ch);
-          bool              HasChan(int   ch);
+        typedef struct{
+          bool hasChan;
+          TH2F *cumulativeSignalPlot;
+          TH1F *integralOfPeakRegion;
+          TH1F *integralNoise;
+          TH1F *netSignal;
+          TH1F *gausMean_photoElectrons;
+          TH1F *gausAmplitude_photoElectrons;
+          TH1F *gausSigma_photoElectrons;
+          TH1F *numPhotoElectronsDistr;
+          gausFuncList_t  gausFunctions;
+        }hists_per_chan_t;
+        ChannelHists();
+        ~ChannelHists();
+        void              MakeChan(int  ch);
+        hists_per_chan_t&  GetChan(int   ch);
+        bool              HasChan(int   ch);
 
         private:
-          hists_per_chan_t chanhist[v1751_const::gChanMax];
-          bool fHasChan[v1751_const::gChanMax];//TODO
+        hists_per_chan_t fChanHists[v1751_const::gChanMax];
+        //bool fHasChan[v1751_const::gChanMax];
       };
       AnalyseBurst(Event& evt);
       ~AnalyseBurst();

@@ -26,12 +26,13 @@ namespace caen{
 
   class ChannelSamples{
     public:
-      typedef std::vector<int16_t>::iterator iterator;
-      typedef std::vector<int16_t> samples_t;
+      typedef int16_t sample_value_t;
+      typedef std::vector<sample_value_t>::iterator iterator;
+      typedef std::vector<sample_value_t> samples_t;
       void Reserve(uint32_t res){fSamples.reserve(res);}
       void SetChanId(int ch){fChanId=ch;}
       int GetChanId(){return fChanId;}
-      void PushSample(int16_t val){fSamples.push_back(val);}
+      void PushSample(sample_value_t val){fSamples.push_back(val);}
       void Clear(){fSamples.clear();}
       iterator GetSamplesBegin(){return fSamples.begin();}
       iterator GetSamplesEnd  (){return fSamples.end  ();}
@@ -121,6 +122,7 @@ namespace caen{
       ~Raw();
       void Info();
       bool GetNextRawToEvent(Event&);
+      uint32_t GetNumChanSamples(){return fChannelSize;}
     private:
       bool PullRawData();
       FileHandler* fRawFile;
@@ -132,7 +134,8 @@ namespace caen{
       std::vector<int /** seq num for Ids of collecting data channels*/ > fChannelIdMap;
   };/*}}}*/
   namespace v1751_const{
-      static const int gChanMax=8;
+      const int gChanMax=8;
+      extern int gNumSamples;
   };
 };
 

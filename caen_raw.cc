@@ -8,6 +8,10 @@
 
 
 namespace caen{
+  namespace v1751_const{
+    //int const gChanMax=8;
+    int gNumSamples;
+  };
 
   //File /*{{{*/
   FileHandler::FileHandler(std::string& ifn){
@@ -101,6 +105,7 @@ namespace caen{
     fEventHeader->Info();
     fEventSize=fEventHeader->GetEventSize();
     fChannelSize=fEventHeader->GetRawChannelSize();
+    //v1751_const::gNumSamples=fChannelSize;
     fChannelsPerEvent=fEventHeader->GetNChannels();
 
     const unsigned int mask=fEventHeader->GetChannelMask();
@@ -190,6 +195,7 @@ namespace caen{
 
 
   void Event::Reserve(int channelId, uint32_t numSamples){
+    v1751_const::gNumSamples=numSamples;
     fChannelsData[channelId].Reserve(numSamples);
     fChannelsData[channelId].SetChanId(channelId);
     return;
