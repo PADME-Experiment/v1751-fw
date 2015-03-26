@@ -18,9 +18,9 @@ namespace caen{
     fRawFileP=NULL;
     fRawFileP=fopen(ifn.c_str(),"r");
     if(fRawFileP==NULL){
-      std::cerr<<"File not found "<<ifn<<std::endl;
+      std::cerr<<"File not found \""<<ifn<<"\""<<std::endl;
     }else{
-      std::cerr<<"File "<<ifn<<" successfuly oppened"<<std::endl;
+      std::cerr<<"File \""<<ifn<<"\" successfuly oppened"<<std::endl;
     }
   }
   FileHandler::~FileHandler(){

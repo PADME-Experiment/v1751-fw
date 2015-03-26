@@ -2,8 +2,13 @@
 #include"caen_raw.h"
 #include"analyse_run.h"
 #include"analyse_burst.h"
-#include<iostream>
+
 #include<vector>
+
+#include<algorithm>
+#include<string>
+#include<iostream>
+#include<cctype>
 
 namespace caen{
   int gDebug;
@@ -51,9 +56,11 @@ int main(int argc, char* argv[]) {
       //list>>tmpstring;
       list.getline((char*)tmpchar,500,'\n');
       tmpstring=tmpchar;
+      tmpstring.erase(std::remove(tmpstring.begin(),tmpstring.end(),' '),tmpstring.end());
       if(tmpstring.find_first_of('#')!=std::string::npos)
         tmpstring.erase(tmpstring.find_first_of('#'),tmpstring.length()); // # comment char
-      if(tmpstring.size()>0) inputFiles.push_back(tmpstring);
+      if(tmpstring.size()>0)
+        inputFiles.push_back(tmpstring);
     }
   }
   caen::gNBursts=inputFiles.size();
@@ -63,7 +70,7 @@ int main(int argc, char* argv[]) {
 
   for(std::vector<std::string>::iterator if_it=inputFiles.begin();if_it!=inputFiles.end();++if_it){
     std::string& filename=*if_it;
-    std::cerr<<"Processing "<<filename<<std::endl;
+    std::cerr<<"Processing \""<<filename<<"\""<<std::endl;
 
     caen::FileHandler rawFile(filename);
     if(!rawFile.IsOpened())continue;
