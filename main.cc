@@ -51,6 +51,8 @@ int main(int argc, char* argv[]) {
       //list>>tmpstring;
       list.getline((char*)tmpchar,500,'\n');
       tmpstring=tmpchar;
+      if(tmpstring.find_first_of('#')!=std::string::npos)
+        tmpstring.erase(tmpstring.find_first_of('#'),tmpstring.length()); // # comment char
       if(tmpstring.size()>0) inputFiles.push_back(tmpstring);
     }
   }
@@ -64,6 +66,7 @@ int main(int argc, char* argv[]) {
     std::cerr<<"Processing "<<filename<<std::endl;
 
     caen::FileHandler rawFile(filename);
+    if(!rawFile.IsOpened())continue;
     caen::Event evt;
     caen::Raw raw(&rawFile,evt);
 
@@ -80,7 +83,6 @@ int main(int argc, char* argv[]) {
       std::cout<<burstrootfn<<std::endl;
       anaburst.WriteToFile(burstrootfn);
     }
-
   }
   anarun.Finish();
 

@@ -25,7 +25,11 @@ namespace caen{
   }
   FileHandler::~FileHandler(){
     std::cout<<fRawFileP<<std::endl;
-    fclose(fRawFileP);
+    if(fRawFileP)
+      fclose(fRawFileP);
+  }
+  bool FileHandler::IsOpened(){
+    return (fRawFileP!=NULL);
   }
   template<typename T> bool FileHandler::GetFileData(T& dat){
     unsigned int bytesRead=fread((void*)&dat,sizeof(T),1,fRawFileP);

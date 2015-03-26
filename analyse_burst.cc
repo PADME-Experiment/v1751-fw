@@ -52,24 +52,35 @@ namespace caen{
 
     namestr="integralOfPeakRegion_ch_"+channame.str();
     titlestr="integral Of Peak Region channel "+channame.str();
-    fChanHists[ch].integralOfPeakRegion = new TH1F(namestr.c_str(),titlestr.c_str(),3000,0,20000);
+    fChanHists[ch].integralOfPeakRegion = new TH1F(namestr.c_str(),titlestr.c_str(),2000,0,20000);
 
     namestr="integralNoise_ch_"+channame.str();
     titlestr="integral Noise channel"+channame.str();
-    fChanHists[ch].integralNoise = new TH1F(namestr.c_str(),titlestr.c_str(),3000,0,20000);
+    fChanHists[ch].integralNoise = new TH1F(namestr.c_str(),titlestr.c_str(),2000,0,20000);
 
     namestr="netSignal_ch_"+channame.str();
     titlestr="Net Signal channel "+channame.str();
-    fChanHists[ch].netSignal = new TH1F(namestr.c_str(),titlestr.c_str(),3000,0,20000);
-
-    namestr="gausMean_photoElectrons_ch_"+channame.str();       fChanHists[ch].gausMean_photoElectrons     = new TH1F (namestr.c_str(),namestr.c_str(),20,0,20);
-    namestr="gausAmplitude_photoElectrons_ch_"+channame.str(); fChanHists[ch].gausAmplitude_photoElectrons= new TH1F (namestr.c_str(),namestr.c_str(),20,0,20);
-    namestr="gausSigma_photoElectrons_ch_"+channame.str();      fChanHists[ch].gausSigma_photoElectrons    = new TH1F (namestr.c_str(),namestr.c_str(),20,0,20);
+    fChanHists[ch].netSignal = new TH1F(namestr.c_str(),titlestr.c_str(),2000,0,20000);
 
     namestr="numPhotoElectronsDistr_ch_"+channame.str();
     titlestr="Number of photo electrons chan "+channame.str();
     fChanHists[ch].numPhotoElectronsDistr= new TH1F(namestr.c_str(),titlestr.c_str(),20,0,20);
 
+    fChanHists[ch].gausMean_photoElectrons     = new TGraphErrors (20);
+    fChanHists[ch].gausAmplitude_photoElectrons= new TGraphErrors (20);
+    fChanHists[ch].gausSigma_photoElectrons    = new TGraphErrors (20);
+
+    namestr="gausMean_photoElectrons_ch_"+channame.str();
+    fChanHists[ch].gausMean_photoElectrons      ->
+      SetNameTitle(namestr.c_str(),titlestr.c_str());
+
+    namestr="gausAmplitude_photoElectrons_ch_"+channame.str();
+    fChanHists[ch].gausAmplitude_photoElectrons ->
+      SetNameTitle(namestr.c_str(),titlestr.c_str());
+
+    namestr="gausSigma_photoElectrons_ch_"+channame.str();
+    fChanHists[ch].gausSigma_photoElectrons     ->
+      SetNameTitle(namestr.c_str(),titlestr.c_str());
   }/*}}}*/
 
   bool AnalyseBurst::ChannelHists::HasChan(int ch){/*{{{*/
@@ -126,6 +137,7 @@ namespace caen{
     for(int channel_i=0;channel_i<v1751_const::gChanMax;++channel_i){
       if(fHists.HasChan(channel_i)){
         ChannelHists::hists_per_chan_t& chanHists=fHists.GetChan(channel_i);
+        chanHists.nEvt=chanHists.integralOfPeakRegion->GetEntries();
         TF1* fitSinExp=new TF1("sinExp","[0]*exp(-0.5*((x-[1])/[2])*((x-[1])/[2]))*(sin(x*[3]+[4])+1)",200,1400);
         fitSinExp->SetParLimits(3,
             3.14/(
@@ -164,7 +176,7 @@ namespace caen{
           funcname<<"gaus_"<<gaus_i;
           fitGaus=new TF1(
               funcname.str().c_str(),
-              "[0]*exp(-0.5*((x-[1])/[2])**2)",
+              "([0]/([2]*sqrt(2.*acos(-1.))) ) * exp(-0.5*((x-[1])/[2])**2)",
               ((2*gaus_i-.5)*3.14-fitSinGaus_b)/fitSinGaus_a,
               ((2*gaus_i+1.5)*3.14-fitSinGaus_b)/fitSinGaus_a);
           chanHists.gausFunctions.push_back(fitGaus);
@@ -185,30 +197,77 @@ namespace caen{
           gausFitRes=chanHists.integralOfPeakRegion->Fit(funcname.str().c_str(),"R+");
           gausresi=Int_t(gausFitRes);
           std::cout<<gaus_i<<" "<<gausresi<<std::endl;
+
+          chanHists.gausAmplitude_photoElectrons->
+            SetPoint(gaus_i,gaus_i+1,fitGaus->GetParameter(0));
+          chanHists.gausMean_photoElectrons->
+            SetPoint(gaus_i,gaus_i+1,fitGaus->GetParameter(1));
+          chanHists.gausSigma_photoElectrons->
+            SetPoint(gaus_i,gaus_i+1,fitGaus->GetParameter(2));
+
+          chanHists.gausAmplitude_photoElectrons->
+            SetPointError(gaus_i,.5,fitGaus->GetParError(0));
+          chanHists.gausMean_photoElectrons->
+            SetPointError(gaus_i,.5,fitGaus->GetParError(1));
+          chanHists.gausSigma_photoElectrons->
+            SetPointError(gaus_i,.5,fitGaus->GetParError(2));
+
+
           gaus_i++;
-
-          chanHists.gausMean_photoElectrons->
-            SetBinContent(gaus_i,fitGaus->GetParameter(1));
-          chanHists.gausAmplitude_photoElectrons->
-            SetBinContent(gaus_i,fitGaus->GetParameter(0));
-          chanHists.gausSigma_photoElectrons->
-            SetBinContent(gaus_i,fitGaus->GetParameter(2));
-
-          chanHists.gausMean_photoElectrons->
-            SetBinError(gaus_i,fitGaus->GetParError(1));
-          chanHists.gausAmplitude_photoElectrons->
-            SetBinError(gaus_i,fitGaus->GetParError(0));
-          chanHists.gausSigma_photoElectrons->
-            SetBinError(gaus_i,fitGaus->GetParError(2));
-
-
         } while (gausresi==0);
+        chanHists.gausAmplitude_photoElectrons->Set(gaus_i);
+        chanHists.gausMean_photoElectrons->Set(gaus_i);
+        chanHists.gausSigma_photoElectrons->Set(gaus_i);
+
+
         chanHists.integralOfPeakRegion->Sumw2();
         chanHists.integralNoise->Sumw2();
         chanHists.netSignal->Add(
             chanHists.integralOfPeakRegion,
             chanHists.integralNoise,
             1,-1);
+        TF1* gain_f=new TF1("gain_f","[0]*x+[1]");
+        gain_f->SetParameters(500,0);
+        chanHists.gausMean_photoElectrons->Fit(gain_f);
+
+        chanHists.offset[0]=gain_f->GetParameter(1);
+        chanHists.offset[1]=gain_f->GetParError(1);
+        chanHists.gain[0]=gain_f->GetParameter(0);
+        chanHists.gain[1]=gain_f->GetParError(0);
+
+        delete gain_f;
+
+        chanHists.nPhotoElectrons[0]=chanHists.nPhotoElectrons[1]=0;
+        for(int bin_i=1;bin_i<chanHists.netSignal->GetNbinsX();++bin_i){
+          chanHists.nPhotoElectrons[0]+=
+            chanHists.netSignal->GetBinContent(bin_i)*(chanHists.netSignal->GetBinCenter(bin_i)-chanHists.offset[0])/
+            chanHists.gain[0];
+          std::cout<<"bin_i "<<bin_i<<"  cont "<<chanHists.netSignal->GetBinContent(bin_i)<<"   center "<<chanHists.netSignal->GetBinCenter(bin_i)<<"    gaus_i "<< (chanHists.netSignal->GetBinCenter(bin_i)-chanHists.offset[0])/ chanHists.gain[0]<<std::endl;
+
+          chanHists.numPhotoElectronsDistr->SetBinContent(
+              round((chanHists.netSignal->GetBinCenter(bin_i)-chanHists.offset[0])/
+                chanHists.gain[0])-1,
+              chanHists.numPhotoElectronsDistr->GetBinContent(
+                round((chanHists.netSignal->GetBinCenter(bin_i)-chanHists.offset[0])/
+                  chanHists.gain[0])-1)+
+              chanHists.netSignal->GetBinContent(bin_i)
+              );
+
+          chanHists.nPhotoElectrons[1]+=
+            chanHists.netSignal->GetBinContent(bin_i)*
+            chanHists.netSignal->GetBinError(bin_i)*
+            chanHists.netSignal->GetBinError(bin_i);
+        }
+        chanHists.nPhotoElectrons[1]=sqrt(chanHists.nPhotoElectrons[1]);
+        chanHists.nPhotoElectrons[1]=1;
+
+        chanHists.nPhotoElectronsNorm[0]=
+          chanHists.nPhotoElectrons[0]/chanHists.nEvt;
+        chanHists.nPhotoElectronsNorm[1]=
+          chanHists.nPhotoElectrons[1]/chanHists.nEvt;
+
+
+
       }
     }
   }/*}}}*/

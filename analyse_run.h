@@ -24,8 +24,10 @@ namespace caen{
       static const int fNGausMax=20;
     private:
       int fBurst_i;
-      TH1F*  gausPars_vs_burstId_hists[v1751_const::gChanMax][fNGausMax][3 /** A,X,W*/];
-      TH1F*  gain_netSignal_MinToMax_hists[v1751_const::gChanMax];
+      TGraphErrors*  gausPars_vs_burstId_hists[v1751_const::gChanMax][fNGausMax][3 /** A,X,W*/];
+      TGraphErrors*  gain_netSignal_MinToMax_hists[v1751_const::gChanMax];
+      TGraphErrors*  nPhotoElectrons[v1751_const::gChanMax];
+      TGraphErrors*  nEvents[v1751_const::gChanMax];
       TFile* fRootFileP;
   };
 };

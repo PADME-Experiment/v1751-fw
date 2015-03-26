@@ -7,6 +7,7 @@
 #include<TFile.h>
 #include<TGraphErrors.h>
 #include<TH1F.h>
+#include<TH1I.h>
 #include<TH2F.h>
 
 #include<fstream>
@@ -36,10 +37,15 @@ namespace caen{
           TH1F *integralOfPeakRegion;
           TH1F *integralNoise;
           TH1F *netSignal;
-          TH1F *gausMean_photoElectrons;
-          TH1F *gausAmplitude_photoElectrons;
-          TH1F *gausSigma_photoElectrons;
+          TGraphErrors *gausMean_photoElectrons;
+          TGraphErrors *gausAmplitude_photoElectrons;
+          TGraphErrors *gausSigma_photoElectrons;
           TH1F *numPhotoElectronsDistr;
+          double gain[2/**0 value, 1 error*/];
+          double offset[2];
+          double nPhotoElectrons[2];
+          double nPhotoElectronsNorm[2];
+          int nEvt;
           gausFuncList_t  gausFunctions;
         }hists_per_chan_t;
         ChannelHists();

@@ -15,6 +15,7 @@ namespace caen{
     public:
       FileHandler(std::string&);
       ~FileHandler();
+      bool IsOpened();
       FileHandler* GetInstance(){return this;}
       FileHandler(FileHandler&){;}
       template<typename T> bool GetFileData(T& dat);
