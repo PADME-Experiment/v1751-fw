@@ -7,6 +7,7 @@
 #include<TFile.h>
 #include<TGraphErrors.h>
 #include<TH1F.h>
+#include<TH1D.h>
 #include<TH1I.h>
 #include<TH2F.h>
 
@@ -34,7 +35,7 @@ namespace caen{
         typedef struct{
           bool hasChan;
           TH2F *cumulativeSignalPlot;
-          TH1F *integralOfPeakRegion;
+          TH1D *integralOfPeakRegion;
           TH1F *integralNoise;
           TH1F *netSignal;
           TGraphErrors *gausMean_photoElectrons;
