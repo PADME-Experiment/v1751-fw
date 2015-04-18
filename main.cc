@@ -68,7 +68,9 @@ int main(int argc, char* argv[]) {
   caen::AnalyseRun anarun;
   anarun.Init();
 
-  for(std::vector<std::string>::iterator if_it=inputFiles.begin();if_it!=inputFiles.end();++if_it){
+  for(std::vector<std::string>::iterator if_it=inputFiles.begin();
+      if_it!=inputFiles.end();
+      ++if_it){
     std::string& filename=*if_it;
     std::cerr<<"Processing \""<<filename<<"\""<<std::endl;
 

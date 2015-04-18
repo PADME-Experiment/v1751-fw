@@ -52,7 +52,7 @@ namespace caen{
 
     namestr="integralOfPeakRegion_ch_"+channame.str();
     titlestr="integral Of Peak Region channel "+channame.str();
-    fChanHists[ch].integralOfPeakRegion = new TH1D(namestr.c_str(),titlestr.c_str(),0000,0,20000);
+    fChanHists[ch].integralOfPeakRegion = new TH1D(namestr.c_str(),titlestr.c_str(),2000,0,20000);
 
     namestr="integralNoise_ch_"+channame.str();
     titlestr="integral Noise channel"+channame.str();
@@ -120,12 +120,10 @@ namespace caen{
         chanHists.cumulativeSignalPlot->Fill(sample_i,sampValue);
         sumHits+=
           sample_i>=startSignalTimeRegion &&
-          sample_i<stopSignalTimeRegion?sampValue
-          :0;
+          sample_i<stopSignalTimeRegion?sampValue:0;
         sumNoise+=
           sample_i>=0 &&
-          sample_i<stopSignalTimeRegion-startSignalTimeRegion?sampValue
-          :0;
+          sample_i<stopSignalTimeRegion-startSignalTimeRegion?sampValue:0;
         ++sample_i;
       }
       chanHists.integralOfPeakRegion->Fill(sumHits);
