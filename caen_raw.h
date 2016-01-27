@@ -37,6 +37,8 @@ namespace caen{
       void Clear(){fSamples.clear();}
       iterator GetSamplesBegin(){return fSamples.begin();}
       iterator GetSamplesEnd  (){return fSamples.end  ();}
+      const unsigned int GetNSamples()const{return fSamples.size();}
+      const sample_value_t GetValue(unsigned const int i){return fSamples[i];}
       samples_t& GetContainer(){return fSamples;}
     private:
       samples_t fSamples;

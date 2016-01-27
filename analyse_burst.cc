@@ -108,31 +108,42 @@ namespace caen{
       int chanId=chan_it->first;
       ChannelHists::hists_per_chan_t& chanHists = fHists.GetChan(chanId);
 
+      const unsigned int startSignalTimeRegion= 750;
+      const unsigned int stopSignalTimeRegion = 850;
+      const unsigned int signalIntWindow=stopSignalTimeRegion-startSignalTimeRegion;
+
+
+      for(unsigned int fon_i=0;(fon_i+1)*signalIntWindow<startSignalTimeRegion;++fon_i){
+        double sumNoise=0;
+        for(unsigned int value_i=fon_i*signalIntWindow;value_i<(fon_i+1)*signalIntWindow;++value_i){
+          sumNoise+=chan.GetValue(value_i);
+        }
+        chanHists.integralNoise->Fill(sumNoise);
+      }
+
+      for(unsigned int fon_i=fon_i+1;(fon_i+1)*signalIntWindow>=stopSignalTimeRegion&&fon_i*signalIntWindow<chan.GetNSamples();++fon_i){
+        double sumNoise=0;
+        for(unsigned int value_i=fon_i*signalIntWindow;value_i<(fon_i+1)*signalIntWindow;++value_i){
+          sumNoise+=chan.GetValue(value_i);
+        }
+        chanHists.integralNoise->Fill(sumNoise);
+      }
+
       double sumHits=0;
-      double sumNoise=0;
-      const int startSignalTimeRegion= 750;
-      const int stopSignalTimeRegion = 850;
-      int sample_i=0;
-      for(ChannelSamples::iterator samp_it=chan.GetSamplesBegin();
-          samp_it!=chan.GetSamplesEnd();
-          ++samp_it){
-        const ChannelSamples::sample_value_t sampValue=*samp_it;
-        chanHists.cumulativeSignalPlot->Fill(sample_i,sampValue);
-        sumHits+=
-          sample_i>=startSignalTimeRegion &&
-          sample_i<stopSignalTimeRegion?sampValue:0;
-        sumNoise+=
-          sample_i>=0 &&
-          sample_i<stopSignalTimeRegion-startSignalTimeRegion?sampValue:0;
-        ++sample_i;
+      for(unsigned int value_i=startSignalTimeRegion;value_i<stopSignalTimeRegion;++value_i){
+        sumHits+=chan.GetValue(value_i);
       }
       chanHists.integralOfPeakRegion->Fill(sumHits);
-      chanHists.integralNoise->Fill(sumNoise);
+
+      for(unsigned int value_i=0;value_i<chan.GetNSamples();++value_i){
+        chanHists.cumulativeSignalPlot->Fill(value_i,chan.GetValue(value_i));
+      }
     }
   }/*}}}*/
 
   void AnalyseBurst::Finish(){/*{{{*/
     for(int channel_i=0;channel_i<v1751_const::gChanMax;++channel_i){
+      if(channel_i!=1)continue;
       if(fHists.HasChan(channel_i)){
         ChannelHists::hists_per_chan_t& chanHists=fHists.GetChan(channel_i);
         chanHists.nEvt=chanHists.integralOfPeakRegion->GetEntries();
@@ -223,7 +234,7 @@ namespace caen{
         chanHists.netSignal->Add(
             chanHists.integralOfPeakRegion,
             chanHists.integralNoise,
-            1,-1);
+            1,-chanHists.integralOfPeakRegion->GetEntries()/chanHists.integralNoise->GetEntries());
         TF1* gain_f=new TF1("gain_f","[0]*x+[1]");
         gain_f->SetParameters(500,0);
         chanHists.gausMean_photoElectrons->Fit(gain_f);
@@ -235,34 +246,68 @@ namespace caen{
 
         delete gain_f;
 
-        chanHists.nPhotoElectrons[0]=chanHists.nPhotoElectrons[1]=0;
-        for(int bin_i=1;bin_i<chanHists.netSignal->GetNbinsX();++bin_i){
-          chanHists.nPhotoElectrons[0]+=
-            chanHists.netSignal->GetBinContent(bin_i)*(chanHists.netSignal->GetBinCenter(bin_i)-chanHists.offset[0])/
-            chanHists.gain[0];
-          std::cout<<"bin_i "<<bin_i<<"  cont "<<chanHists.netSignal->GetBinContent(bin_i)<<"   center "<<chanHists.netSignal->GetBinCenter(bin_i)<<"    gaus_i "<< (chanHists.netSignal->GetBinCenter(bin_i)-chanHists.offset[0])/ chanHists.gain[0]<<std::endl;
-
-          chanHists.numPhotoElectronsDistr->SetBinContent(
-              round((chanHists.netSignal->GetBinCenter(bin_i)-chanHists.offset[0])/
-                chanHists.gain[0])-1,
-              chanHists.numPhotoElectronsDistr->GetBinContent(
-                round((chanHists.netSignal->GetBinCenter(bin_i)-chanHists.offset[0])/
-                  chanHists.gain[0])-1)+
-              chanHists.netSignal->GetBinContent(bin_i)
-              );
-
-          chanHists.nPhotoElectrons[1]+=
-            chanHists.netSignal->GetBinContent(bin_i)*
-            chanHists.netSignal->GetBinError(bin_i)*
-            chanHists.netSignal->GetBinError(bin_i);
+        double signal_sum_y   =0;
+        double signal_sum_xy  =0;
+        double signal_sum_x2y2=0;
+        double signal_sum_x2y=0;
+        double backgr_sum_y   =0;
+        double backgr_sum_xy  =0;
+        double backgr_sum_x2y2=0;
+        double backgr_sum_x2y=0;
+        for(int bin_i=1;bin_i<chanHists.integralOfPeakRegion->GetNbinsX();++bin_i){
+          const unsigned int x=round(
+              (chanHists.integralOfPeakRegion->GetBinCenter(bin_i)-chanHists.offset[0])/
+              chanHists.gain[0]);
+          const unsigned int y_signal=chanHists.integralOfPeakRegion->GetBinContent(bin_i);
+          const unsigned int y_backgr=chanHists.integralNoise->GetBinContent(bin_i);
+          chanHists.numPhotoElectronsDistr->AddBinContent(x,
+              chanHists.netSignal->GetBinContent(bin_i));
+          if(x<0){
+            std::cerr
+              <<"Warning negative number of photo electrons. BAD gain calib"
+              <<std::endl;
+            continue;
+          }
+          signal_sum_y+=y_signal;
+          backgr_sum_y+=y_backgr;
+          signal_sum_xy+=x*y_signal;
+          backgr_sum_xy+=x*y_backgr;
+          signal_sum_x2y2+=x*x*y_signal*y_signal;
+          backgr_sum_x2y2+=x*x*y_backgr*y_backgr;
+          signal_sum_x2y+=x*x*y_signal;
+          backgr_sum_x2y+=x*x*y_backgr;
         }
-        chanHists.nPhotoElectrons[1]=sqrt(chanHists.nPhotoElectrons[1]);
-        chanHists.nPhotoElectrons[1]=1;
+        const double signal_mean_n  =signal_sum_xy/signal_sum_y;
+        const double signal_sigint_n=sqrt(signal_sum_x2y/signal_sum_y);
+        const double signal_sigext_n=sqrt(
+            signal_sum_x2y/signal_sum_y-signal_sum_xy/signal_sum_y*signal_sum_xy/signal_sum_y);
+        const double backgr_mean_n  =backgr_sum_xy/backgr_sum_y;
+        const double backgr_sigint_n=sqrt(backgr_sum_x2y/backgr_sum_y);
+        const double backgr_sigext_n=sqrt(
+            backgr_sum_x2y/backgr_sum_y-backgr_sum_xy/backgr_sum_y*backgr_sum_xy/backgr_sum_y);
 
-        chanHists.nPhotoElectronsNorm[0]=
-          chanHists.nPhotoElectrons[0]/chanHists.nEvt;
-        chanHists.nPhotoElectronsNorm[1]=
-          chanHists.nPhotoElectrons[1]/chanHists.nEvt;
+        const double mean_n=signal_mean_n-backgr_mean_n;
+        const double sint_n=sqrt(signal_sigint_n*signal_sigint_n+backgr_sigint_n*backgr_sigint_n);
+        const double sext_n=sqrt(signal_sigext_n*signal_sigext_n+backgr_sigext_n*backgr_sigext_n);
+        std::cout
+          <<std::endl
+          <<std::endl
+          <<std::endl
+          <<std::endl
+          <<std::endl
+          <<std::endl
+          <<std::endl
+          <<std::endl
+          <<"  mean_n "<<mean_n
+          <<"  sint_n "<<sint_n
+          <<"  sext_n "<<sext_n
+          <<std::endl;
+
+        chanHists.nPhotoElectrons[0]=mean_n;
+        chanHists.nPhotoElectrons[1]=sext_n;
+
+        chanHists.nPhotoElectronsNorm[0]=chanHists.nPhotoElectrons[0];
+        chanHists.nPhotoElectronsNorm[1]=chanHists.nPhotoElectrons[1];
 
 
 
