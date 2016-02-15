@@ -3,6 +3,14 @@
 
 #include<string>
 
+
+
+
+namespace PMT_const{
+  extern double gain; //*1E5
+}
+
+
 namespace caen{
   extern int gDebug;
   extern std::string gOutputRootFile;

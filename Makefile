@@ -14,6 +14,13 @@ debug: all
 
 
 OBJFILES=$(patsubst %.cc,%.o,$(wildcard *.cc))
+OBJFILES=main.o
+OBJFILES+=2016-02-10-ledpmt-analyse_burst.o
+OBJFILES+=2016-02-10-ledpmt-analyse_run.o
+#OBJFILES+=analyse_burst.o
+#OBJFILES+=analyse_run.o
+OBJFILES+=caen_raw.o
+
 EXEC=analyser
 
 all: $(EXEC)

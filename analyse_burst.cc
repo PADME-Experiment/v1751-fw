@@ -255,9 +255,9 @@ namespace caen{
         double backgr_sum_x2y2=0;
         double backgr_sum_x2y=0;
         for(int bin_i=1;bin_i<chanHists.integralOfPeakRegion->GetNbinsX();++bin_i){
-          const unsigned int x=round(
+          const unsigned int x=(unsigned int)(
               (chanHists.integralOfPeakRegion->GetBinCenter(bin_i)-chanHists.offset[0])/
-              chanHists.gain[0]);
+              chanHists.gain[0]+.5);
           const unsigned int y_signal=chanHists.integralOfPeakRegion->GetBinContent(bin_i);
           const unsigned int y_backgr=chanHists.integralNoise->GetBinContent(bin_i);
           chanHists.numPhotoElectronsDistr->AddBinContent(x,

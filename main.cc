@@ -1,7 +1,7 @@
 #include"main.h"
 #include"caen_raw.h"
-#include"analyse_run.h"
-#include"analyse_burst.h"
+#include"2016-02-10-ledpmt-analyse_run.h"
+#include"2016-02-10-ledpmt-analyse_burst.h"
 
 #include<vector>
 
@@ -9,6 +9,13 @@
 #include<string>
 #include<iostream>
 #include<cctype>
+
+
+namespace PMT_const{
+  double gain=1.5; //*1E5
+}
+
+
 
 namespace caen{
   int gDebug;
@@ -74,17 +81,21 @@ int main(int argc, char* argv[]) {
     std::string& filename=*if_it;
     std::cerr<<"Processing \""<<filename<<"\""<<std::endl;
 
-    caen::FileHandler rawFile(filename);
-    if(!rawFile.IsOpened())continue;
-    caen::Event evt;
-    caen::Raw raw(&rawFile,evt);
 
-    caen::AnalyseBurst anaburst(evt);
-    while( raw.GetNextRawToEvent(evt)){
+
+    RAW::Raw raw(filename);
+    if(!raw.IsOpened())continue;
+    caen::AnalyseBurst anaburst;
+    unsigned int trig_i=0;
+    while(!raw.Eof()){
+      RAW::Event evt;
+      raw.GetEvent(evt);
+      if(trig_i==0)anaburst.Init(evt);
       anaburst.Process(evt);
+      trig_i++;
     }
-    anaburst.Finish();
-    anarun.Process(anaburst.GetHists());
+    anaburst.PostProcess();
+    anarun.Process(anaburst.GetChannelsData());
 
     if(caen::gDebug>0){
       std::string burstrootfn=filename+".root";
@@ -94,7 +105,6 @@ int main(int argc, char* argv[]) {
     }
   }
   anarun.Finish();
-
   anarun.WriteToFile(caen::gOutputRootFile);
 
 
