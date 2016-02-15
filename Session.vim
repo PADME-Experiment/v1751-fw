@@ -1,0 +1,10 @@
+edit ./Session.vim
+split Makefile
+tabnew main.h
+vsplit main.cc
+tabnew caen_raw.h
+vsplit caen_raw.cc
+tabnew 2016-02-10-ledpmt-analyse_run.h
+vsplit 2016-02-10-ledpmt-analyse_run.cc
+tabnew 2016-02-10-ledpmt-analyse_burst.h
+vsplit 2016-02-10-ledpmt-analyse_burst.cc
