@@ -14,6 +14,6 @@ namespace PMT_const{
 namespace caen{
   extern int gDebug;
   extern std::string gOutputRootFile;
-  extern int gNBursts;
+  extern unsigned int gNBursts;
 };
 #endif

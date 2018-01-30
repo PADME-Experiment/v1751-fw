@@ -23,27 +23,6 @@ namespace RAW{
     if(fRawFileP)
       fclose(fRawFileP);
   }
-  void Header::PostProc() {
-    fNChannels=0;
-    for(int i=0;i<8;i++){
-      if(fHeader.channelMask>>i&0x1){
-        fChannelOccurNumber[i]=fNChannels;
-        ++fNChannels;
-      }else{
-        fChannelOccurNumber[i]=-1;
-      }
-    }
-    fEventSize=fHeader.eventSize-4;
-    fChannelSize=fEventSize/fNChannels;
-
-    fChannelMask   = fHeader.channelMask;
-    fEventCounter  = fHeader.eventCounter;
-    fTriggerTimeTag= fHeader.triggerTimeTag;
-    //Info();
-
-  caen::v1751_const::gNumSamples=fChannelSize*3;
-  }
-
 
 
      void Header::Info(){/*{{{*/

@@ -35,6 +35,7 @@ namespace caen{
       TFile* fRootFileP;
       TGraphErrors* burstStatistics[v1751_const::gChanMax];
       TH1F *nPhotoelElectronSpe    [v1751_const::gChanMax];
+      TH1F *nPhotoElectrSum        [v1751_const::gChanMax];
 
 
 

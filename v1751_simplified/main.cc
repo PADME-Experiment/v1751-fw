@@ -1,7 +1,7 @@
 #include"main.h"
-#include"caen_raw.h"
-#include"2016-02-10-ledpmt-analyse_run.h"
-#include"2016-02-10-ledpmt-analyse_burst.h"
+#include"Histos.h"
+#include"v1751raw.h"
+#include"Analyse.h"
 
 #include<vector>
 
@@ -9,29 +9,21 @@
 #include<string>
 #include<iostream>
 #include<cctype>
-
-
-namespace PMT_const{
-  //double gain=1.5; //*1E5 1000V
-  //double gain=.4; //*1E5 850V
-  double gain=.7; //*1E5 900V
-}
+#include<getopt.h>
 
 
 
-namespace caen{
-  int gDebug;
-  unsigned int gNBursts;
-  std::string gOutputRootFile;
-};
+int gDebug;
+unsigned int gNBursts;
+std::string gOutputRootFile;
 
 int main(int argc, char* argv[]) {
   int opt;
   std::vector<std::string> inputFiles,inputLists;
   std::string tmpstring;
 
-  caen::gDebug=1; // default value
-  caen::gNBursts=-1;
+  gDebug=1; // default value
+  gNBursts=-1;
 
 
   const struct option longopts[] =
@@ -48,9 +40,9 @@ int main(int argc, char* argv[]) {
     switch (opt){
       case 'i': tmpstring=optarg;inputFiles.push_back(tmpstring);break;
       case 'l': tmpstring=optarg;inputLists.push_back(tmpstring);break;
-      case 'o': caen::gOutputRootFile=optarg;break;
-      case 'd': caen::gDebug=atoi(optarg); break;
-      case 'b': caen::gNBursts=atoi(optarg);break;
+      case 'o': gOutputRootFile=optarg;break;
+      case 'd': gDebug=atoi(optarg); break;
+      case 'b': gNBursts=atoi(optarg);break;
       default:
                 fprintf(
                     stderr,
@@ -60,7 +52,7 @@ int main(int argc, char* argv[]) {
   }
 
   if(
-      caen::gOutputRootFile.size()==0||
+      gOutputRootFile.size()==0||
       (inputLists.size()==0&&inputFiles.size()==0))
   {
     fprintf(stderr,"SYNOPSIS: %s [-i input file] [-l list file] [-o root_file]\n",argv[0]);
@@ -69,6 +61,7 @@ int main(int argc, char* argv[]) {
 
   char tmpchar[500];
 
+  Histos::GetInstance().SetFileName(gOutputRootFile);
 
   for(unsigned int i=0;i<inputLists.size();++i){
     std::ifstream list(inputLists[i].c_str(),std::ifstream::in);
@@ -86,47 +79,43 @@ int main(int argc, char* argv[]) {
     }
   }
 
-  caen::AnalyseRun anarun;
-  anarun.Init();
+  Analyse ana;
+  ana.Initialise();
 
-unsigned int burst_i=0;
+  unsigned int burst_i=0;
+  int event_i=0;
   for(std::vector<std::string>::iterator if_it=inputFiles.begin();
       if_it!=inputFiles.end();
       ++if_it){
     std::string& filename=*if_it;
     std::cerr<<"Processing \""<<filename<<"\""<<std::endl;
-    if(burst_i>caen::gNBursts)break;
+    if(burst_i>gNBursts)break;
     burst_i++;
 
 
 
-    RAW::Raw raw(filename);
+    RawFile raw(filename);
     if(!raw.IsOpened())continue;
-    caen::AnalyseBurst anaburst;
-    unsigned int trig_i=0;
-    while(!raw.Eof()){
-      RAW::Event evt;
-      raw.GetEvent(evt);
-      if(trig_i==0)anaburst.Init(evt);
-      anaburst.Process(evt);
-      trig_i++;
-    }
-    anaburst.PostProcess();
-    anarun.Process(anaburst.GetChannelsData());
-
-    if(caen::gDebug>0){
-      std::string burstrootfn=filename+".root";
-      burstrootfn.erase(0,burstrootfn.find_last_of('/')+1);
-      std::cout<<burstrootfn<<std::endl;
-      anaburst.WriteToFile(burstrootfn);
+    while(raw.GetNextEvt()){
+      if((event_i)%1000==0)std::cerr<<event_i++<<" events processed"<<std::endl;
+      ana.Process(raw.GetEvent());
     }
   }
-  anarun.Finish();
-  anarun.WriteToFile(caen::gOutputRootFile);
+  ana.Finalise();
 
 
 
 
 
   return 0;
+}
+
+
+
+
+// Singleton class
+Histos& Histos::GetInstance()
+{
+  static Histos h;
+  return h;
 }

@@ -18,6 +18,8 @@ namespace caen{
       delete sigIntegral[chan_i];
       delete burstStatistics[chan_i];
       delete nPhotoelElectronSpe[chan_i];
+
+      delete nPhotoElectrSum        [chan_i];
       delete fHist2TotVsIntAmp      [chan_i];
       delete fHist2RiseVsFall       [chan_i];
       delete fHist2RiseVsIntAmp     [chan_i];
@@ -42,6 +44,10 @@ namespace caen{
       histTitle="n photo electrons ch "+chan_i_ss.str();
       nPhotoelElectronSpe[chan_i] = new TH1F(histName.c_str(),histTitle.c_str(),
           1000,-20,1000);
+
+histName="nPhotoelectrSum_ch_"+chan_i_ss.str();
+histTitle=histName;
+nPhotoElectrSum[chan_i]=new TH1F(histName.c_str(),histTitle.c_str(),60000,0,400000);
 
       histName="riseTime_ch_"+chan_i_ss.str();
       histTitle="Rising times ch "+chan_i_ss.str();
@@ -160,6 +166,7 @@ namespace caen{
       fSum2PeakTimes[chanID].resize(nSamp);
       fSumAmplitudes [chanID].resize(nSamp);
       fSum2Amplitudes[chanID].resize(nSamp);
+      double nPheAllburst=0;
       for(unsigned int imp_i=0;imp_i<nSamp;++imp_i){
         const double val=chandat.fAmplitudesPerBlink[imp_i];
         const double peaktime=chandat.fMaxYTime[imp_i];
@@ -176,6 +183,7 @@ namespace caen{
         sumPeaktime+=peaktime;
         sum2Peaktime+=peaktime*peaktime;
         const double nphe=-val/PMT_const::gain/5/1.6;
+        nPheAllburst+=nphe;
         nPhotoelElectronSpe[chanID]->Fill(nphe);
 
         fHist2TotVsIntAmp    [chanID]->Fill(chandat.fTOT[5][imp_i],nphe);
@@ -186,6 +194,7 @@ namespace caen{
         fHistFall            [chanID]->Fill(falltime);
 
       }
+      nPhotoElectrSum[chanID]->Fill(nPheAllburst);
       const double meanAmp=sumAmp/nSamp;
       const double sigAmp=sqrt(sum2Amp-sumAmp*sumAmp/nSamp)/nSamp;
 
@@ -279,6 +288,7 @@ namespace caen{
       sigIntegral[chan_i]->Write();
       burstStatistics[chan_i]->Write();
       nPhotoelElectronSpe[chan_i]->Write();
+      nPhotoElectrSum[chan_i]->Write();
 
 
         fHist2TotVsIntAmp      [chan_i]->Write();

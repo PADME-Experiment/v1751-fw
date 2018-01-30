@@ -11,6 +11,7 @@
 #include<TH1I.h>
 #include<TH2F.h>
 
+
 #include<fstream>
 #include<getopt.h>
 #include<iomanip>
@@ -33,7 +34,7 @@ namespace caen{
     public:
       ChannelDat();
       ~ChannelDat(){
-      //std::cout<<"destr"<<std::endl;
+        //std::cout<<"destr"<<std::endl;
         DeleteHistograms();
       }
       bool IsEnabled(){return fChannelID>=0;}
@@ -41,19 +42,19 @@ namespace caen{
       void SetChannelID(int ch){
         fChannelID=ch;
         CreateHistograms();
-         RenameHistograms();
-        }
+        RenameHistograms();
+      }
     private:
 
     private:
       int fChannelID;
     public:
-    std::deque<double> fTOT[10];
-    std::deque<double> fRiseTime;
-    std::deque<double> fFallTime;
-    std::deque<double> fMaxY;
-    std::deque<int   > fMaxYTime;
-    std::deque<double> fMeanTime;
+      std::deque<double> fTOT[10];
+      std::deque<double> fRiseTime;
+      std::deque<double> fFallTime;
+      std::deque<double> fMaxY;
+      std::deque<int   > fMaxYTime;
+      std::deque<double> fMeanTime;
 
 
 
@@ -73,6 +74,7 @@ namespace caen{
       TH1F *integralNoise;
       TH1F *netSignal;
       TH1F *numPhotoElectronsDistr;
+      TH1F *fH1EventTimeDistr;
       double offset[2];
       double nPhotoElectrons[2];
       double nPhotoElectronsNorm[2];
@@ -84,7 +86,7 @@ namespace caen{
 
   class AnalyseBurst{
     public:
-    //ako se promeni da se vidi PostProcess
+      //ako se promeni da se vidi PostProcess
       typedef std::map<int,ChannelDat> channels_map_t;
       AnalyseBurst();
       ~AnalyseBurst();
@@ -96,6 +98,7 @@ namespace caen{
       //channels_map_t& GetChannelsData(){return fChannelsData;}
       ChannelDat* GetChannelsData(){return fChannelsData_;}
     private:
+      std::fstream fSamplestestfile;
       //channels_map_t   fChannelsData;
       ChannelDat   fChannelsData_[8];
   };
